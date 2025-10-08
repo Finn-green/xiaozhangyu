@@ -3,15 +3,11 @@
   "short_name": "章鱼喷墨机",
   "start_url": ".",
   "display": "standalone",
+  "display_override": ["window-controls-overlay"],
   "background_color": "#fce4ec",
   "theme_color": "#ff80ab",
   "description": "一个有趣的网页应用",
   "icons": [
-    {
-      "src": "https://i.postimg.cc/nzP9sgxr/chan-125.png",
-      "sizes": "125x125",
-      "type": "image/png"
-    },
     {
       "src": "https://i.postimg.cc/nzP9sgxr/chan-125.png",
       "sizes": "192x192",
