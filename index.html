@@ -3287,6 +3287,35 @@
     /* 60px是搜索栏的高度, 再加上状态栏的高度 */
     padding-top: calc(60px + max(var(--status-bar-height, 44px), env(safe-area-inset-top))) !important;
 }
+
+/* --- 【最终方案】防止页面滑动偏移与溢出 --- */
+
+/* 
+ * 1. 针对 body 和 html (根源修复)
+ *    - overflow-x: hidden;  禁止所有横向滚动。这是最关键的一步，能消除因内容溢出导致的滑动。
+ *    - overscroll-behavior-x: none;  禁止“滑动到边缘时触发导航”的默认浏览器行为（如后退/前进）。
+*/
+html, body {
+    overflow-x: hidden;
+    overscroll-behavior-x: none;
+}
+
+/* 
+ * 2. 针对 .phone-screen 容器 (加固措施)
+ *    再次确保作为主容器的 .phone-screen 本身不会产生任何横向滚动。
+*/
+.phone-screen {
+    overflow-x: hidden;
+}
+
+/* 
+ * 3. 针对所有 .screen 页面 (保险措施)
+ *    为每个独立的页面也加上这个规则，确保即使某个页面内部有宽度超出的元素，
+ *    也不会导致整个页面容器被撑开。
+*/
+.screen {
+    overflow-x: hidden;
+}
     </style>
     <!-- === moments 固定在 phone-screen 内的修复样式 (自动插入补丁) === -->
 <style>
