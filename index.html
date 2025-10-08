@@ -24,6 +24,9 @@
     <link rel="apple-touch-icon" href="https://i.postimg.cc/nzP9sgxr/chan-125.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>章鱼喷墨机</title>
+        <!-- ▼▼▼ 在这里粘贴新的代码 ▼▼▼ -->
+    <link rel="manifest" href="manifest.json">
+    <!-- ▲▲▲ 粘贴结束 ▲▲▲ -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <link rel="apple-touch-icon" href="https://i.postimg.cc/nzP9sgxr/chan-125.png">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -31689,6 +31692,21 @@ fileInput.addEventListener('change', async (e)=>{
     </div>
 </div>
   
+      <!-- ▼▼▼ 在这里粘贴新的代码 ▼▼▼ -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js')
+            .then(registration => {
+              console.log('ServiceWorker registration successful with scope: ', registration.scope);
+            })
+            .catch(err => {
+              console.log('ServiceWorker registration failed: ', err);
+            });
+        });
+      }
+    </script>
+    <!-- ▲▲▲ 粘贴结束 ▲▲▲ -->
 </body>
 
 </html>
