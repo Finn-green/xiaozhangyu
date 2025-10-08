@@ -5164,6 +5164,14 @@
                 <h1 class="title">聊天</h1>
             </div>
             <div class="action-btn-group">
+            <div class="action-btn-group">
+            <!-- ▼▼▼ 在这里粘贴新的全屏按钮 ▼▼▼ -->
+            <button class="action-btn" id="fullscreen-btn" title="全屏模式">
+                <svg viewBox="0 0 24 24" fill="currentColor" style="width:22px; height:22px;">
+                    <path d="M5,5H10V7H7V10H5V5M14,5H19V10H17V7H14V5M17,14H19V19H14V17H17V14M10,17H7V14H5V19H10V17Z" />
+                </svg>
+            </button>
+            <!-- ▲▲▲ 粘贴结束 ▲▲▲ -->
         <button class="action-btn" id="import-card-btn" title="导入角色卡">
         <svg viewBox="0 0 24 24" fill="currentColor" style="width:24px; height:24px;">
             <path d="M9,16V10H5L12,3L19,10H15V16H9M5,20V18H19V20H5Z" />
@@ -31705,6 +31713,33 @@ fileInput.addEventListener('change', async (e)=>{
             });
         });
       }
+    </script>
+    <!-- ▲▲▲ 粘贴结束 ▲▲▲ -->
+    <!-- ▼▼▼ 在这里粘贴新的全屏功能脚本 ▼▼▼ -->
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+        if (fullscreenBtn) {
+          fullscreenBtn.addEventListener('click', () => {
+            const elem = document.documentElement; // 获取整个页面
+            if (document.fullscreenElement || document.webkitFullscreenElement) {
+              // 如果当前已是全屏，则退出全屏
+              if (document.exitFullscreen) {
+                document.exitFullscreen();
+              } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+              }
+            } else {
+              // 如果当前不是全屏，则请求进入全屏
+              if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+              } else if (elem.webkitRequestFullscreen) { // 兼容老版本Chrome/Safari
+                elem.webkitRequestFullscreen();
+              }
+            }
+          });
+        }
+      });
     </script>
     <!-- ▲▲▲ 粘贴结束 ▲▲▲ -->
 </body>
