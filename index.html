@@ -3,7 +3,26 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <!-- 启用 Web App 模式 -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+    <!-- Web App 在主屏幕上的标题 -->
+    <meta name="apple-mobile-web-app-title" content="章鱼喷墨机">
+    
+    <!-- 
+      设置顶部状态栏样式 (时间和电量)
+      - 'default': 白色背景，黑色文字
+      - 'black': 黑色背景，白色文字
+      - 'black-translucent': 半透明黑色，内容会延伸到状态栏下方，最具沉浸感
+    -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <!-- 
+      (您已有的代码，用于设置主屏幕图标)
+      确保这张图片是 180x180 像素或更高分辨率的方形图片，效果最好
+    -->
+    <link rel="apple-touch-icon" href="https://i.postimg.cc/nzP9sgxr/chan-125.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>章鱼喷墨机</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <link rel="apple-touch-icon" href="https://i.postimg.cc/nzP9sgxr/chan-125.png">
@@ -5009,6 +5028,28 @@
             top: 0;
             left: 0;
         }
+        /* --- iPhone 全屏与安全区域适配 --- */
+.phone-screen {
+    /* 使用苹果官方提供的安全区域变量来增加内边距 */
+    /* 这可以防止内容被顶部的刘海/灵动岛和底部的Home指示器遮挡 */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* 专门为聊天输入框和底部操作栏适配底部安全区 */
+/* 您的代码中已经有了这些，这里是再次确认和加强 */
+.message-input-area, 
+#multi-select-bar,
+.function-panel,
+.mall-bottom-nav,
+.cart-checkout-bar {
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
+}
+
+/* 如果有其他绝对定位在底部的元素，也需要类似处理 */
+.bottom-nav {
+    bottom: env(safe-area-inset-bottom);
+}
     </style>
 </head>
 
