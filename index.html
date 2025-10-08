@@ -4983,6 +4983,33 @@
 }
 </style>
 <!-- === /zindex-patch === -->
+<style>
+        /* --- 全屏强制适配样式 --- */
+        body {
+            /* 移除body原有的居中和渐变背景，让phone-screen完全接管 */
+            display: block;
+            background: #fce4ec; /* 设置一个基础底色，防止闪烁 */
+            padding: 0;
+            min-height: 0;
+        }
+
+        .phone-screen {
+            /* 覆盖原有的尺寸和位置限制 */
+            max-width: none !important;
+            max-height: none !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            
+            /* 移除模拟手机的视觉效果 */
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            
+            /* 如果之前不是从左上角定位，则强制定位 */
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+    </style>
 </head>
 
 <body>
