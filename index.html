@@ -3208,6 +3208,81 @@
 #mall-cart-screen:not(.manage-mode) #cart-delete-selected-btn {
     display: none;
 }
+
+
+/* --- 【最终自适应方案 V2 - 修正版】--- */
+
+:root {
+    /* 定义一个全局的状态栏高度变量，方便统一调整 */
+    --status-bar-height: 33px;
+}
+
+/* 
+ * 1. 强制所有页面容器从屏幕最顶端(top:0)开始，并移除自身的顶部内边距。
+ *    这是最关键的一步，用于覆盖掉“自动补丁”中错误的 top 偏移。
+*/
+.screen {
+    top: 0 !important;
+    padding-top: 0 !important;
+    box-sizing: border-box !important;
+}
+
+/* 
+ * 2. 为带标准标题栏的页面（包括聊天页）拉伸毛玻璃背景。
+ *    原理：将状态栏空间作为内边距加到 header 内部，让其背景向上延伸。
+*/
+.app-header {
+    padding-top: max(var(--status-bar-height), env(safe-area-inset-top)) !important;
+    height: auto;
+}
+
+/* 
+ * 3. 为主屏幕页面适配，让壁纸延伸。
+ *    原理：将状态栏空间作为内边距加到页面本身，把内容推下去。
+*/
+#home-screen,
+#home-screen-2 {
+    padding-top: max(var(--status-bar-height), env(safe-area-inset-top)) !important;
+    box-sizing: border-box !important;
+}
+/* --- 【商城专属】强制添加浅灰色毛玻璃状态栏 --- */
+
+/* 
+ * 1. 使用 ::before 伪元素，在商城页面的最顶部创建一个新的视觉层。
+ *    这就像在页面顶部贴了一块半透明的玻璃。
+*/
+#mall-screen::before {
+    content: ''; /* 伪元素必须有 content 属性才能显示 */
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    /* 高度会自动适配普通手机和iPhone刘海屏 */
+    height: max(var(--status-bar-height, 44px), env(safe-area-inset-top));
+    
+    /* 设置为您想要的浅灰色毛玻璃效果 */
+    background-color: rgba(220, 220, 220, 0.7);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    
+    /* 确保它在最顶层，能覆盖在原有的白色搜索栏之上 */
+    z-index: 11; 
+}
+
+/* 
+ * 2. 将商城原有的白色搜索栏(.mall-header)整体向下推移一个状态栏的高度。
+*/
+#mall-screen .mall-header {
+    top: max(var(--status-bar-height, 44px), env(safe-area-inset-top));
+}
+
+/* 
+ * 3. 将商城的内容区(.content)也向下推移，为“状态栏 + 搜索栏”同时留出空间。
+*/
+#mall-screen .content {
+    /* 60px是搜索栏的高度, 再加上状态栏的高度 */
+    padding-top: calc(60px + max(var(--status-bar-height, 44px), env(safe-area-inset-top))) !important;
+}
     </style>
     <!-- === moments 固定在 phone-screen 内的修复样式 (自动插入补丁) === -->
 <style>
@@ -3220,7 +3295,11 @@
 /* 把所有 screen 统一做绝对铺满，这样切换只影响可见性，不会改变布局流 */
 .screen {
   position: absolute !important;
-  inset: 0; /* top:0; right:0; bottom:0; left:0; */
+  top: max(var(--status-bar-height), env(safe-area-inset-top)); /* 从状态栏下方开始 */
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: auto !important; /* 高度自动填充剩余空间 */
   display: none !important;
   flex-direction: column;
   -webkit-overflow-scrolling: touch;
@@ -5032,7 +5111,6 @@
 .phone-screen {
     /* 使用苹果官方提供的安全区域变量来增加内边距 */
     /* 这可以防止内容被顶部的刘海/灵动岛和底部的Home指示器遮挡 */
-    padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
 }
 
