@@ -3,10 +3,6 @@
   "short_name": "章鱼喷墨机",
   "start_url": ".",
   "display": "standalone",
-  "display_override": [
-    "window-controls-overlay",
-    "minimal-ui"
-  ],
   "background_color": "#fce4ec",
   "theme_color": "#ff80ab",
   "description": "一个有趣的网页应用",
