@@ -3316,40 +3316,7 @@ html, body {
 .screen {
     overflow-x: hidden;
 }
-/* --- 【最终手机端沉浸式全屏修正方案 V2】 --- */
 
-/* 
- * 1. 强制最外层容器(.phone-screen)的高度等于屏幕的物理高度(100vh)。
- *    `viewport-fit=cover` meta标签会确保 `100vh` 就是整个屏幕的高度。
-*/
-.phone-screen {
-    height: 100vh !important;
-}
-
-/* 
- * 2. 将状态栏/刘海的高度，作为内边距添加到您自己设计的“毛玻璃”标题栏(.app-header)的顶部。
- *    env(safe-area-inset-top) 是浏览器提供的变量，它会自动获取顶部安全区的距离。
-*/
-.app-header {
-    padding-top: env(safe-area-inset-top) !important;
-    height: auto !important; /* 确保 header 能自动增高以容纳内边距 */
-}
-
-/* 
- * 3. 对于没有标准 .app-header 的特殊页面（如主屏幕和商城），
- *    我们直接给页面本身或其内容区增加顶部内边距，把内容推下去。
-*/
-#home-container, /* 包含两个主页的容器 */
-#mall-screen .content {
-    padding-top: env(safe-area-inset-top) !important;
-}
-
-/*
- * 4. 特别修正商城的绝对定位顶部栏，也把它推下来。
-*/
-#mall-screen .mall-header {
-    top: env(safe-area-inset-top) !important;
-}
     </style>
     <!-- === moments 固定在 phone-screen 内的修复样式 (自动插入补丁) === -->
 <style>
