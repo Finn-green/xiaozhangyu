@@ -3316,6 +3316,36 @@ html, body {
 .screen {
     overflow-x: hidden;
 }
+/* --- 【PWA桌面端】无边框模式适配 --- */
+
+/* 
+ * 1. 让最外层的容器可以被拖动。
+ *    `app-region: drag` 是一个特殊的CSS属性，它告诉系统：
+ *    “这个区域是标题栏的一部分，用户可以用鼠标按住它来拖动整个窗口”。
+*/
+.phone-screen {
+    -webkit-app-region: drag;
+    app-region: drag;
+}
+
+/* 
+ * 2. 将整个应用的内容区向下推移一个标题栏的高度。
+ *    `env(titlebar-area-height)` 是浏览器在无边框模式下提供的专用变量，
+ *    它的值就是那个原生标题栏的实际高度。
+ *    在普通浏览器中，这个变量的值是0，所以这段代码不会产生任何影响。
+*/
+.phone-screen {
+    padding-top: env(titlebar-area-height, 30px); /* 30px 是一个备用值 */
+}
+
+/* 
+ * 3. 告诉浏览器，所有可点击的元素（如按钮、输入框、链接）都不是拖动区域。
+ *    这样可以确保在标题栏区域内的按钮依然可以被正常点击。
+*/
+button, a, input, textarea, select, .app-icon, .nav-btn, .message-bubble, .list-item {
+    -webkit-app-region: no-drag;
+    app-region: no-drag;
+}
     </style>
     <!-- === moments 固定在 phone-screen 内的修复样式 (自动插入补丁) === -->
 <style>
@@ -31803,65 +31833,6 @@ fileInput.addEventListener('change', async (e)=>{
     }, true);
   });
 </script>
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    // --- 方案A: 为普通网页访客保留手动全屏按钮 ---
-    const phoneScreen = document.querySelector('.phone-screen');
-    if (phoneScreen) {
-      phoneScreen.addEventListener('click', (event) => {
-        const fullscreenBtn = event.target.closest('#fullscreen-btn');
-        if (!fullscreenBtn) return;
-        
-        event.preventDefault();
-        
-        const elem = document.documentElement;
-        if (document.fullscreenElement || document.webkitFullscreenElement) {
-          if (document.exitFullscreen) document.exitFullscreen();
-          else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-        } else {
-          if (elem.requestFullscreen) elem.requestFullscreen();
-          else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
-        }
-      });
-    }
-
-    // --- 方案B: 为已安装的PWA用户自动适配无边框全屏 ---
-    
-    // 1. 检查浏览器是否支持 Window Controls Overlay API
-    if ('windowControlsOverlay' in navigator) {
-      
-      // 2. 监听标题栏区域的几何变化
-      navigator.windowControlsOverlay.addEventListener('geometrychange', () => {
-        // 3. 获取标题栏的可见性。如果可见，说明我们正运行在PWA的无边框模式下
-        const isOverlayVisible = navigator.windowControlsOverlay.visible;
-        
-        // 4. 获取标题栏的高度，这可以避开右上角的系统按钮
-        const titlebarHeight = isOverlayVisible ? `${navigator.windowControlsOverlay.getTitlebarAreaRect().height}px` : '0px';
-        
-        // 5. 动态地将这个高度应用到我们的主容器上
-        //    我们不再修改所有.screen，只修改最外层的.phone-screen，这样就不会破坏内部布局
-        const phoneScreenContainer = document.querySelector('.phone-screen');
-        if (phoneScreenContainer) {
-          // 这会把整个应用界面整体向下推移一个标题栏的高度，完美避开遮挡
-          phoneScreenContainer.style.paddingTop = titlebarHeight;
-        }
-      });
-    }
-  });
-</script>
-<!-- ▼▼▼ 在这里粘贴新的“自动隐藏地址栏”脚本 ▼▼▼ -->
-    <script>
-      // 当窗口加载完成后执行
-      window.addEventListener('load', function() {
-        // 延迟一小段时间，确保所有内容都渲染完毕
-        setTimeout(function() {
-          // 将页面滚动到(0, 1)的位置
-          window.scrollTo(0, 1);
-        }, 100);
-      });
-    </script>
-    <!-- ▲▲▲ 粘贴结束 ▲▲▲ -->
-</body>
 </body>
 
 </html>
