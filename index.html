@@ -263,17 +263,25 @@
         }
 
         .dock {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 10px;
-            background-color: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(10px);
-            border-radius: var(--border-radius);
-            margin: 0 20px;
-            min-height: 10px;
-            gap: 15px;
-        }
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    background-color: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    border-radius: var(--border-radius);
+    gap: 15px;
+    
+    /* --- ▼▼▼ 新增的核心代码 ▼▼▼ --- */
+    position: sticky; /* 1. 设置为粘性定位 */
+    bottom: 10px;     /* 2. 当滚动时，让它粘在距离屏幕底部10px的位置 */
+    
+    /* 3. 调整外边距，移除不必要的顶部外边距 */
+    margin: 0 20px; 
+    
+    /* 4. 确保它在内容之上 */
+    z-index: 100;
+}
 
         .app-icon {
             display: flex;
@@ -5319,7 +5327,7 @@ html, body {
     <button id="plus-btn" class="icon-btn" style="background-color: transparent; color: #555;">
         <svg viewBox="0 0 24 24" fill="currentColor" style="width: 28px; height: 28px;"><path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"></path></svg>
     </button>
-    <input type="text" id="wechat-message-input" placeholder="输入消息...">
+    <input type="text" id="wechat-message-input" placeholder="输入消息..."autocomplete="off">
     <div class="wechat-send-btn-group" style="display: flex; gap: 8px;">
         <button id="wechat-send-message-btn" class="icon-btn send-btn">➤</button>
         <button id="wechat-get-reply-btn" class="icon-btn">
@@ -5352,7 +5360,7 @@ html, body {
         
 <!-- ▲▲▲ 粘贴到这里结束 ▲▲▲ -->
             <div class="message-input-area" id="message-input-default">
-                <input type="text" id="message-input" placeholder="输入消息...">
+                <input type="text" id="message-input" placeholder="输入消息..."autocomplete="off">
                 <button id="send-message-btn" class="icon-btn send-btn">➤</button>
                 <button id="get-reply-btn" class="icon-btn">
                     <svg viewBox="0 0 24 24">
@@ -14267,6 +14275,10 @@ async function sendMessage() {
 
     const text = currentInputElement.value.trim();
     if (!text || isGenerating) return;
+    
+    // --- ▼▼▼ 核心修改：立即清空输入框 ▼▼▼ ---
+    currentInputElement.value = '';
+    // --- ▲▲▲ 修改结束 ▲▲▲ ---
 
     const chat = (currentChatType === 'private') 
         ? db.characters.find(c => c.id === currentChatId) 
@@ -14295,9 +14307,7 @@ async function sendMessage() {
         
         // 3. 保存数据，但不触发AI回复
         await saveData();
-        
-        // 优化点：清空当前正在使用的输入框
-        currentInputElement.value = '';
+                
         return; // 提前结束函数
     }
 
