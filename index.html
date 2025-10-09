@@ -3316,36 +3316,39 @@ html, body {
 .screen {
     overflow-x: hidden;
 }
-/* --- 【最终手机端沉浸式全屏修正方案】 --- */
+/* --- 【最终手机端沉浸式全屏修正方案 V2】 --- */
 
 /* 
- * 1. 确保 body 能够完全伸展到屏幕边缘。
- *    移除所有可能限制其尺寸的内外边距。
+ * 1. 强制最外层容器(.phone-screen)的高度等于屏幕的物理高度(100vh)。
+ *    `viewport-fit=cover` meta标签会确保 `100vh` 就是整个屏幕的高度。
 */
-body {
-    padding: 0 !important;
-    margin: 0 !important;
+.phone-screen {
+    height: 100vh !important;
 }
 
 /* 
- * 2. 强制最外层容器(.phone-screen)占据100%视口高度，并处理好安全区域。
- *    这是最关键的一步，它会为手机顶部的“刘海”或状态栏留出空间。
+ * 2. 将状态栏/刘海的高度，作为内边距添加到您自己设计的“毛玻璃”标题栏(.app-header)的顶部。
+ *    env(safe-area-inset-top) 是浏览器提供的变量，它会自动获取顶部安全区的距离。
 */
-.phone-screen {
-    /* 
-      使用 calc() 和 env(safe-area-inset-top) 来精确计算高度和内边距。
-      - height: 100vh; 让容器高度等于屏幕物理高度。
-      - padding-top: env(safe-area-inset-top); 在容器顶部增加一个和状态栏/刘海等高的内边距。
-      这样，虽然容器的背景铺满了整个屏幕，但所有子内容都会被这个内边距推到安全的可视区域下方。
-    */
-    height: 100vh !important;
+.app-header {
     padding-top: env(safe-area-inset-top) !important;
-    
-    /* 
-      为了确保计算正确，我们强制 box-sizing 为 border-box。
-      这意味着 padding-top 会被计算在100vh的高度之内，而不是额外增加高度。
-    */
-    box-sizing: border-box !important;
+    height: auto !important; /* 确保 header 能自动增高以容纳内边距 */
+}
+
+/* 
+ * 3. 对于没有标准 .app-header 的特殊页面（如主屏幕和商城），
+ *    我们直接给页面本身或其内容区增加顶部内边距，把内容推下去。
+*/
+#home-container, /* 包含两个主页的容器 */
+#mall-screen .content {
+    padding-top: env(safe-area-inset-top) !important;
+}
+
+/*
+ * 4. 特别修正商城的绝对定位顶部栏，也把它推下来。
+*/
+#mall-screen .mall-header {
+    top: env(safe-area-inset-top) !important;
 }
     </style>
     <!-- === moments 固定在 phone-screen 内的修复样式 (自动插入补丁) === -->
