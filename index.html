@@ -31744,38 +31744,106 @@ fileInput.addEventListener('change', async (e)=>{
     <!-- ▲▲▲ 粘贴结束 ▲▲▲ -->
 <script>
   document.addEventListener('DOMContentLoaded', () => {
-    // 1. 获取始终存在的主容器
     const phoneScreen = document.querySelector('.phone-screen');
     
+    // 1. 状态变量
+    // isFullscreenIntended: 记录用户是否“想要”处于全屏模式
+    let isFullscreenIntended = false;
+    // needsFullscreenResume: 一个标记，表示页面刚从后台返回，需要恢复全屏
+    let needsFullscreenResume = false;
+
     if (phoneScreen) {
-      // 2. 将点击事件监听器绑定在主容器上
+      // 2. 为Dock栏中的全屏按钮绑定事件
       phoneScreen.addEventListener('click', (event) => {
-        // 3. 检查被点击的元素或其父元素是否是我们的全屏按钮
         const fullscreenBtn = event.target.closest('#fullscreen-btn');
+        if (!fullscreenBtn) return;
         
-        // 4. 如果不是，则什么也不做，直接返回
-        if (!fullscreenBtn) {
-          return;
+        event.preventDefault();
+        
+        if (document.fullscreenElement || document.webkitFullscreenElement) {
+          // 如果是用户主动点击按钮退出，则将“期望状态”设为false
+          isFullscreenIntended = false;
+          document.exitFullscreen ? document.exitFullscreen() : document.webkitExitFullscreen();
+        } else {
+          // 如果是用户主动点击按钮进入，则将“期望状态”设为true
+          isFullscreenIntended = true;
+          document.documentElement.requestFullscreen ? document.documentElement.requestFullscreen() : document.documentElement.webkitRequestFullscreen();
         }
+      });
+    }
+
+    // 3. 监听页面的可见性变化（即，从后台切换回来）
+    document.addEventListener('visibilitychange', () => {
+      // 当页面从隐藏状态变为可见时
+      if (document.visibilityState === 'visible') {
+        // 检查：我们是否“期望”全屏，但浏览器“实际”上不是全屏？
+        if (isFullscreenIntended && !document.fullscreenElement) {
+          // 如果是，就设置“需要恢复”的标记
+          needsFullscreenResume = true;
+        }
+      }
+    });
+
+    // 4. 【核心】在整个文档上设置一个最高优先级的点击监听器
+    //    参数 `true` 表示在“捕获阶段”就执行，比页面上任何其他点击事件都早
+    document.addEventListener('click', (event) => {
+      // 检查是否满足所有恢复条件
+      if (needsFullscreenResume && isFullscreenIntended && !document.fullscreenElement) {
         
-        // 5. 如果是，则执行全屏逻辑
-        event.preventDefault(); // 阻止 <a> 标签的默认跳转行为
+        // 阻止这次点击的默认行为（比如点击到其他按钮）
+        event.preventDefault();
+        event.stopPropagation();
+        
+        // 消耗掉“需要恢复”的标记，确保这个逻辑只执行一次
+        needsFullscreenResume = false;
+        
+        // 重新请求进入全屏
+        document.documentElement.requestFullscreen ? document.documentElement.requestFullscreen() : document.documentElement.webkitRequestFullscreen();
+      }
+    }, true);
+  });
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // --- 方案A: 为普通网页访客保留手动全屏按钮 ---
+    const phoneScreen = document.querySelector('.phone-screen');
+    if (phoneScreen) {
+      phoneScreen.addEventListener('click', (event) => {
+        const fullscreenBtn = event.target.closest('#fullscreen-btn');
+        if (!fullscreenBtn) return;
+        
+        event.preventDefault();
         
         const elem = document.documentElement;
         if (document.fullscreenElement || document.webkitFullscreenElement) {
-          // 退出全屏
-          if (document.exitFullscreen) {
-            document.exitFullscreen();
-          } else if (document.webkitExitFullscreen) {
-            document.webkitExitFullscreen();
-          }
+          if (document.exitFullscreen) document.exitFullscreen();
+          else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
         } else {
-          // 进入全屏
-          if (elem.requestFullscreen) {
-            elem.requestFullscreen();
-          } else if (elem.webkitRequestFullscreen) {
-            elem.webkitRequestFullscreen();
-          }
+          if (elem.requestFullscreen) elem.requestFullscreen();
+          else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+        }
+      });
+    }
+
+    // --- 方案B: 为已安装的PWA用户自动适配无边框全屏 ---
+    
+    // 1. 检查浏览器是否支持 Window Controls Overlay API
+    if ('windowControlsOverlay' in navigator) {
+      
+      // 2. 监听标题栏区域的几何变化
+      navigator.windowControlsOverlay.addEventListener('geometrychange', () => {
+        // 3. 获取标题栏的可见性。如果可见，说明我们正运行在PWA的无边框模式下
+        const isOverlayVisible = navigator.windowControlsOverlay.visible;
+        
+        // 4. 获取标题栏的高度，这可以避开右上角的系统按钮
+        const titlebarHeight = isOverlayVisible ? `${navigator.windowControlsOverlay.getTitlebarAreaRect().height}px` : '0px';
+        
+        // 5. 动态地将这个高度应用到我们的主容器上
+        //    我们不再修改所有.screen，只修改最外层的.phone-screen，这样就不会破坏内部布局
+        const phoneScreenContainer = document.querySelector('.phone-screen');
+        if (phoneScreenContainer) {
+          // 这会把整个应用界面整体向下推移一个标题栏的高度，完美避开遮挡
+          phoneScreenContainer.style.paddingTop = titlebarHeight;
         }
       });
     }
