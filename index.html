@@ -3316,35 +3316,36 @@ html, body {
 .screen {
     overflow-x: hidden;
 }
-/* --- 【PWA桌面端】无边框模式适配 --- */
+/* --- 【最终手机端沉浸式全屏修正方案】 --- */
 
 /* 
- * 1. 让最外层的容器可以被拖动。
- *    `app-region: drag` 是一个特殊的CSS属性，它告诉系统：
- *    “这个区域是标题栏的一部分，用户可以用鼠标按住它来拖动整个窗口”。
+ * 1. 确保 body 能够完全伸展到屏幕边缘。
+ *    移除所有可能限制其尺寸的内外边距。
 */
-.phone-screen {
-    -webkit-app-region: drag;
-    app-region: drag;
+body {
+    padding: 0 !important;
+    margin: 0 !important;
 }
 
 /* 
- * 2. 将整个应用的内容区向下推移一个标题栏的高度。
- *    `env(titlebar-area-height)` 是浏览器在无边框模式下提供的专用变量，
- *    它的值就是那个原生标题栏的实际高度。
- *    在普通浏览器中，这个变量的值是0，所以这段代码不会产生任何影响。
+ * 2. 强制最外层容器(.phone-screen)占据100%视口高度，并处理好安全区域。
+ *    这是最关键的一步，它会为手机顶部的“刘海”或状态栏留出空间。
 */
 .phone-screen {
-    padding-top: env(titlebar-area-height, 30px); /* 30px 是一个备用值 */
-}
-
-/* 
- * 3. 告诉浏览器，所有可点击的元素（如按钮、输入框、链接）都不是拖动区域。
- *    这样可以确保在标题栏区域内的按钮依然可以被正常点击。
-*/
-button, a, input, textarea, select, .app-icon, .nav-btn, .message-bubble, .list-item {
-    -webkit-app-region: no-drag;
-    app-region: no-drag;
+    /* 
+      使用 calc() 和 env(safe-area-inset-top) 来精确计算高度和内边距。
+      - height: 100vh; 让容器高度等于屏幕物理高度。
+      - padding-top: env(safe-area-inset-top); 在容器顶部增加一个和状态栏/刘海等高的内边距。
+      这样，虽然容器的背景铺满了整个屏幕，但所有子内容都会被这个内边距推到安全的可视区域下方。
+    */
+    height: 100vh !important;
+    padding-top: env(safe-area-inset-top) !important;
+    
+    /* 
+      为了确保计算正确，我们强制 box-sizing 为 border-box。
+      这意味着 padding-top 会被计算在100vh的高度之内，而不是额外增加高度。
+    */
+    box-sizing: border-box !important;
 }
     </style>
     <!-- === moments 固定在 phone-screen 内的修复样式 (自动插入补丁) === -->
