@@ -7971,26 +7971,65 @@ function formatFileSize(bytes) {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
-        function createContextMenu(items, x, y) {
+// ▼▼▼ 请用这个完整的、升级后的函数，替换掉旧的 createContextMenu 函数 ▼▼▼
+function createContextMenu(items, x, y) {
+    removeContextMenu(); // 保持：移除旧菜单
+
+    const menu = document.createElement('div');
+    menu.className = 'context-menu';
+    
+    // 1. 渲染菜单项 (保持不变)
+    items.forEach(item => {
+        const menuItem = document.createElement('div');
+        menuItem.className = 'context-menu-item';
+        if (item.danger) menuItem.classList.add('danger');
+        menuItem.textContent = item.label;
+        menuItem.onclick = () => {
+            item.action();
             removeContextMenu();
-            const menu = document.createElement('div');
-            menu.className = 'context-menu';
-            menu.style.left = `${x}px`;
-            menu.style.top = `${y}px`;
-            items.forEach(item => {
-                const menuItem = document.createElement('div');
-                menuItem.className = 'context-menu-item';
-                if (item.danger) menuItem.classList.add('danger');
-                menuItem.textContent = item.label;
-                menuItem.onclick = () => {
-                    item.action();
-                    removeContextMenu();
-                };
-                menu.appendChild(menuItem);
-            });
-            document.body.appendChild(menu);
-            document.addEventListener('click', removeContextMenu, {once: true});
-        }
+        };
+        menu.appendChild(menuItem);
+    });
+
+    // 2. 将菜单添加到DOM中，但先让它在屏幕外，以便我们测量它的尺寸
+    menu.style.position = 'fixed';
+    menu.style.top = '-9999px';
+    menu.style.left = '-9999px';
+    document.body.appendChild(menu);
+
+    // 3. 【核心修改】动态计算菜单的最佳位置
+    const menuWidth = menu.offsetWidth;
+    const menuHeight = menu.offsetHeight;
+    const screenWidth = window.innerWidth;
+    const screenHeight = window.innerHeight;
+
+    let finalX = x;
+    let finalY = y;
+
+    // a. 调整水平位置，防止菜单超出屏幕右侧
+    if (finalX + menuWidth > screenWidth) {
+        finalX = screenWidth - menuWidth - 10; // 留出10px边距
+    }
+
+    // b. 调整垂直位置，防止菜单超出屏幕下方 (这是您需要的关键逻辑)
+    if (finalY + menuHeight > screenHeight) {
+        // 如果会超出，则将菜单的底部对齐到被点击位置的上方
+        finalY = y - menuHeight - 5; // 向上移动自身高度，并留出5px间距
+    }
+
+    // c. 确保菜单不会跑到屏幕上方外面去
+    if (finalY < 0) {
+        finalY = 10; // 如果计算后还是太高，则固定在顶部10px处
+    }
+
+    // 4. 将计算好的最终位置应用到菜单上
+    menu.style.left = `${finalX}px`;
+    menu.style.top = `${finalY}px`;
+
+    // 5. 绑定全局点击事件以关闭菜单 (保持不变)
+    document.addEventListener('click', removeContextMenu, { once: true });
+}
+// ▲▲▲ 替换结束 ▲▲▲
 
         function removeContextMenu() {
             const menu = document.querySelector('.context-menu');
