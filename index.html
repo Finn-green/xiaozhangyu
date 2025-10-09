@@ -262,26 +262,6 @@
             text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
         }
 
-        .dock {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 10px;
-    background-color: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(10px);
-    border-radius: var(--border-radius);
-    gap: 15px;
-    
-    /* --- ▼▼▼ 新增的核心代码 ▼▼▼ --- */
-    position: sticky; /* 1. 设置为粘性定位 */
-    bottom: 10px;     /* 2. 当滚动时，让它粘在距离屏幕底部10px的位置 */
-    
-    /* 3. 调整外边距，移除不必要的顶部外边距 */
-    margin: 0 20px; 
-    
-    /* 4. 确保它在内容之上 */
-    z-index: 100;
-}
 
         .app-icon {
             display: flex;
@@ -3328,6 +3308,76 @@ html, body {
     </style>
     <!-- === moments 固定在 phone-screen 内的修复样式 (自动插入补丁) === -->
 <style>
+/* --- 【最终修正 v4.0】Dock栏绝对固定在底部 & 内容区独立滚动 --- */
+
+/* 
+ * 1. 关键：将第一页(#home-screen)设为相对定位，并使其成为一个Flexbox容器。
+ *    - position: relative; 为Dock栏创建定位上下文。
+ *    - display: flex; flex-direction: column; 方便我们定义内部滚动区域。
+*/
+#home-screen {
+    position: relative !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 0 !important; /* 移除所有内边距，交由内部元素处理 */
+    overflow: hidden !important; /* 隐藏所有溢出，防止页面过长 */
+}
+
+/*
+ * 2. 关键：定义一个在Dock栏之上的、可独立滚动的内容区域。
+ *    我们将所有原属于 #home-screen 的子元素都包裹在这个新区域里。
+*/
+#home-screen-content {
+    flex-grow: 1;           /* 占据所有可用的垂直空间 */
+    overflow-y: auto;       /* 当内容超出时，只滚动这个区域 */
+    min-height: 0;          /* Flexbox布局的关键技巧，防止内容撑破容器 */
+    padding: 50px 20px 120px 20px; /* 上、左右、下 的内边距。底部留出比Dock栏更高的空间 */
+}
+
+/* 
+ * 3. Dock栏使用绝对定位，强制“粘”在 #home-screen 的最底部。
+*/
+.dock {
+    position: absolute;
+    bottom: 10px;
+    left: 20px;
+    right: 20px;
+    
+    /* 其他所有样式保持不变，确保美观和居中 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    padding: 10px;
+    background-color: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    border-radius: var(--border-radius);
+    z-index: 100;
+
+    /* 清理所有不再需要的属性 */
+    margin: 0;
+    transform: none;
+    width: auto;
+}
+
+/* 
+ * 4. Dock栏内的图标缩放逻辑保持不变，确保能自动适配。
+*/
+.dock .app-icon {
+    flex-shrink: 1;
+    flex-grow: 0;
+    flex-basis: 60px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+}
+.dock .app-icon .icon-img {
+    max-width: 100%;
+    height: auto;
+    flex-shrink: 0;
+}
 /* 确保 phone-screen 做为裁切容器 */
 .phone-screen {
   position: relative !important;
@@ -11861,8 +11911,10 @@ function setupHomeScreen() {
     const getIcon = (id) => db.customIcons[id] || defaultIcons[id]?.url;
     
     // --- 渲染第一页 ---
-    const homeScreen1 = document.getElementById('home-screen');
-    homeScreen1.innerHTML = `
+   const homeScreen1 = document.getElementById('home-screen');
+homeScreen1.innerHTML = `
+    <!-- ▼▼▼ 核心修改：用一个新的 div 包裹所有内容（除了Dock栏） ▼▼▼ -->
+    <div id="home-screen-content">
         <div class="time-widget">
             <div class="date" id="date-display"></div>
             <div class="time" id="time-display"></div>
@@ -11894,7 +11946,6 @@ function setupHomeScreen() {
                      <a href="#" class="app-icon" data-target="wallpaper-screen"><img src="${getIcon('wallpaper-screen')}" alt="壁纸" class="icon-img"><span class="app-name">${defaultIcons['wallpaper-screen'].name}</span></a>
                 </div>
             </div>
-
             <div class="right-column">
                 <div class="small-app-grid">
                     <a href="#" class="app-icon" data-target="chat-list-screen"><img src="${getIcon('chat-list-screen')}" alt="404" class="icon-img"><span class="app-name">${defaultIcons['chat-list-screen'].name}</span></a>
@@ -11910,18 +11961,19 @@ function setupHomeScreen() {
                 </div>
             </div>
         </div>
-        <div class="dock">
-            <a href="#" class="app-icon" id="day-mode-btn"><img src="${getIcon('day-mode-btn')}" alt="日间" class="icon-img"></a>
-            <a href="#" class="app-icon" id="night-mode-btn"><img src="${getIcon('night-mode-btn')}" alt="夜间" class="icon-img"></a>
-<!-- ▼▼▼ 在这里粘贴新的全屏按钮 ▼▼▼ -->
+    </div>
+    <!-- ▲▲▲ 包裹结束 ▲▲▲ -->
+
+    <!-- Dock栏现在被放在了滚动区域的外面，与它平级 -->
+    <div class="dock">
+        <a href="#" class="app-icon" id="day-mode-btn"><img src="${getIcon('day-mode-btn')}" alt="日间" class="icon-img"></a>
+        <a href="#" class="app-icon" id="night-mode-btn"><img src="${getIcon('night-mode-btn')}" alt="夜间" class="icon-img"></a>
         <a href="#" class="app-icon" id="fullscreen-btn" title="全屏模式">
             <img src="data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23444444'%3E%3Cpath d='M5,5H10V7H7V10H5V5M14,5H19V10H17V7H14V5M17,14H19V19H14V17H17V14M10,17H7V14H5V19H10V17Z' /%3E%3C/svg%3E" alt="全屏" class="icon-img">
         </a>
-        <!-- ▲▲▲ 粘贴结束 ▲▲▲ -->            
-            <a href="#" class="app-icon" data-target="font-settings-screen"><img src="${getIcon('font-settings-screen')}" alt="字体" class="icon-img"></a>
-<a href="#" class="app-icon" data-target="ai-space-home-screen"><img src="${getIcon('ai-character-select-screen')}" alt="AI空间" class="icon-img"></a>
-        </div>`;
-
+        <a href="#" class="app-icon" data-target="font-settings-screen"><img src="${getIcon('font-settings-screen')}" alt="字体" class="icon-img"></a>
+        <a href="#" class="app-icon" data-target="ai-space-home-screen"><img src="${getIcon('ai-character-select-screen')}" alt="AI空间" class="icon-img"></a>
+    </div>`;
     // --- 渲染第二页 ---
     const homeScreen2 = document.getElementById('home-screen-2');
  homeScreen2.innerHTML = `
@@ -12224,6 +12276,7 @@ function renderCustomizeForm() {
         let loadingBtn = false
 
         function renderTutorialContent() {
+        
             const tutorials = [
                 {title: '写在前面', imageUrls: ['https://i.postimg.cc/7PgyMG9S/image.jpg']},
                 {
@@ -12244,6 +12297,120 @@ function renderCustomizeForm() {
                 item.innerHTML = `<div class="tutorial-header">${tutorial.title}</div><div class="tutorial-content">${imagesHtml}</div>`;
                 tutorialContentArea.appendChild(item);
             });
+    // --- ▼▼▼ 新增功能按钮的核心代码 ▼▼▼ ---
+
+    // 1. 创建“自动更新”按钮
+    const updateAppBtn = document.createElement('button');
+    updateAppBtn.className = 'btn btn-secondary';
+    updateAppBtn.textContent = '检查更新 (刷新)';
+    updateAppBtn.style.marginTop = '25px';
+
+    updateAppBtn.addEventListener('click', () => {
+        showToast('正在检查更新并刷新页面...');
+        // 对于PWA，Service Worker的更新通常在下次访问时激活
+        // 最简单可靠的“更新”就是强制刷新页面，让浏览器重新拉取资源
+        setTimeout(() => {
+            window.location.reload(true); // 参数 true 表示强制从服务器加载
+        }, 1500);
+    });
+    
+    // 2. 创建“删除所有数据”按钮
+    const deleteAllDataBtn = document.createElement('button');
+    deleteAllDataBtn.className = 'btn btn-danger';
+    deleteAllDataBtn.textContent = '删除所有数据';
+    deleteAllDataBtn.style.marginTop = '15px';
+
+    deleteAllDataBtn.addEventListener('click', async () => {
+        // 使用自定义的弹窗进行确认
+        const confirmed = await showCustomConfirm(
+            '确定要删除所有数据吗？',
+            '该操作不可撤销，本地的所有角色、聊天记录、设置和预设都将被永久清除。',
+            '确定删除',
+            '先去备份'
+        );
+
+        if (confirmed) {
+            showToast('正在清除所有数据...');
+            try {
+                // 清空 Dexie 数据库
+                await dataStorage.clearAll();
+                
+                // 清空 localStorage (用于预设等)
+                localStorage.clear();
+
+                // 清空动态数据库
+                if (window.AppDB_Moments) {
+                    await window.AppDB_Moments.delete();
+                }
+
+                // 2秒后刷新页面
+                setTimeout(() => {
+                    window.location.reload(true);
+                }, 2000);
+
+            } catch (error) {
+                console.error("清除数据失败:", error);
+                showToast('清除数据时发生错误，请查看控制台。');
+            }
+        } else {
+            // 用户点击了“先去备份”，什么也不做
+            showToast('操作已取消');
+        }
+    });
+
+    // 3. 创建一个分隔线
+    const hr = document.createElement('hr');
+    hr.style.border = 'none';
+    hr.style.borderTop = '1px solid #eee';
+    hr.style.margin = '25px 0';
+    
+    // 4. 将所有新元素添加到教程内容区域的末尾
+    tutorialContentArea.appendChild(hr);
+    tutorialContentArea.appendChild(updateAppBtn);
+    tutorialContentArea.appendChild(deleteAllDataBtn);
+
+    // 5. 新增：自定义的确认弹窗函数
+    async function showCustomConfirm(title, text, confirmText, cancelText) {
+        return new Promise(resolve => {
+            // 移除可能存在的旧弹窗
+            const oldConfirm = document.getElementById('custom-confirm-overlay');
+            if (oldConfirm) oldConfirm.remove();
+
+            const overlay = document.createElement('div');
+            overlay.id = 'custom-confirm-overlay';
+            overlay.className = 'modal-overlay visible';
+            overlay.style.zIndex = '99999'; // 确保在最顶层
+
+            overlay.innerHTML = `
+                <div class="modal-window">
+                    <h3>${title}</h3>
+                    <p style="text-align: center; color: #666; font-size: 14px; line-height: 1.6;">${text}</p>
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button id="custom-confirm-cancel" class="btn btn-neutral" style="flex: 1;">${cancelText}</button>
+                        <button id="custom-confirm-ok" class="btn btn-danger" style="flex: 1;">${confirmText}</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(overlay);
+
+            const okBtn = document.getElementById('custom-confirm-ok');
+            const cancelBtn = document.getElementById('custom-confirm-cancel');
+
+            okBtn.onclick = () => {
+                overlay.remove();
+                resolve(true);
+            };
+
+            cancelBtn.onclick = () => {
+                overlay.remove();
+                resolve(false);
+            };
+        });
+    }
+
+    // --- ▲▲▲ 新增代码结束 ▲▲▲
+
 
             const backupDataBtn = document.createElement('button');
             backupDataBtn.className = 'btn btn-primary';
@@ -31210,6 +31377,29 @@ fileInput.addEventListener('change', async (e)=>{
 <!-- ▲▲▲ 添加结束 ▲▲▲ -->
 	<script>
     document.addEventListener('DOMContentLoaded', () => {
+    // ▼▼▼ 在这里粘贴新的代码 ▼▼▼
+        // --- 修复聊天输入框弹出密码填充的最终方案 ---
+        const chatInputs = [
+            document.getElementById('message-input'),
+            document.getElementById('wechat-message-input')
+        ];
+
+        chatInputs.forEach(input => {
+            if (input) {
+                // 用户开始输入时
+                input.addEventListener('focus', () => {
+                    // 临时改为 search 类型，可以有效避免大多数浏览器的密码填充
+                    input.setAttribute('type', 'search');
+                });
+                
+                // 用户离开输入框时
+                input.addEventListener('blur', () => {
+                    // 恢复为 text 类型，以防止浏览器应用奇怪的搜索框样式
+                    input.setAttribute('type', 'text');
+                });
+            }
+        });
+        // --- ▲▲▲ 粘贴结束 ▲▲▲
         // 修复：为聊天室的返回按钮增加特殊处理，以确保底部导航栏能正确显示
         const chatRoomBackBtn = document.querySelector('#chat-room-screen .back-btn');
         if (chatRoomBackBtn) {
