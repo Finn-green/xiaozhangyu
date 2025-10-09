@@ -31849,6 +31849,19 @@ fileInput.addEventListener('change', async (e)=>{
     }
   });
 </script>
+<!-- ▼▼▼ 在这里粘贴新的“自动隐藏地址栏”脚本 ▼▼▼ -->
+    <script>
+      // 当窗口加载完成后执行
+      window.addEventListener('load', function() {
+        // 延迟一小段时间，确保所有内容都渲染完毕
+        setTimeout(function() {
+          // 将页面滚动到(0, 1)的位置
+          window.scrollTo(0, 1);
+        }, 100);
+      });
+    </script>
+    <!-- ▲▲▲ 粘贴结束 ▲▲▲ -->
+</body>
 </body>
 
 </html>
