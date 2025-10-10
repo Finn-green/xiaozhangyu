@@ -13220,22 +13220,49 @@ if (data.character_book && data.character_book.entries && data.character_book.en
                     await saveData();
                     renderChatList();
                 }
-            }, {
-                label: '删除聊天',
-                danger: true,
-                action: async () => {
-                    if (confirm(`确定要删除与“${itemName}”的聊天记录吗？此操作不可恢复。`)) {
-                        if (chatType === 'private') {
-                            db.characters = db.characters.filter(c => c.id !== chatId);
-                        } else {
-                            db.groups = db.groups.filter(g => g.id !== chatId);
-                        }
-                        await saveData();
-                        renderChatList();
-                        showToast('聊天已删除');
-                    }
+            }, // ...
+{
+    label: '删除聊天',
+    danger: true,
+    action: async () => {
+        if (confirm(`确定要删除与“${itemName}”的聊天记录吗？此操作不可恢复。`)) {
+            
+            // ▼▼▼ 在这里进行修改 ▼▼▼
+            try {
+                if (chatType === 'private') {
+                    // 1. 从数据库中删除角色本身 和 它的所有聊天记录
+                    await Promise.all([
+                        dataStorage.removeData(`character_${chatId}`),
+                        dataStorage.clearChatMessages(chatId, 'private')
+                    ]);
+                    
+                    // 2. 从内存中移除该角色
+                    db.characters = db.characters.filter(c => c.id !== chatId);
+                    
+                } else { // 如果是群聊
+                    // 1. 从数据库中删除群聊本身 和 它的所有聊天记录
+                    await Promise.all([
+                        dataStorage.removeData(`group_${chatId}`),
+                        dataStorage.clearChatMessages(chatId, 'group')
+                    ]);
+                    
+                    // 2. 从内存中移除该群聊
+                    db.groups = db.groups.filter(g => g.id !== chatId);
                 }
-            }];
+                
+                // 3. 重新渲染UI并提示
+                renderChatList();
+                showToast('聊天已删除');
+
+            } catch (error) {
+                console.error("删除聊天时发生错误:", error);
+                showToast('删除失败，请查看控制台');
+            }
+            // ▲▲▲ 修改结束 ▲▲▲
+        }
+    }
+}
+];
             createContextMenu(menuItems, x, y);
         }
 
