@@ -3394,6 +3394,20 @@ html, body {
 }
 
 /* ▲▲▲ 添加结束 ▲▲▲ */
+/* ▼▼▼ 在 <style> 标签末尾添加 ▼▼▼ */
+
+/* --- 修复：聊天列表底部被导航栏遮挡的问题 --- */
+#chat-list-screen .content {
+    /* 
+     * 核心修复：为内容区域增加一个足够高的底部内边距。
+     * 80px 是一个安全值，通常高于底部导航栏的高度（68px）。
+     * 这就像在列表底部增加了一个看不见的“垫子”，把整个列表向上推，
+     * 从而让最后一个元素能被完整地滚动和看到。
+     */
+    padding-bottom: 80px !important;
+}
+
+/* ▲▲▲ 添加结束 ▲▲▲ */
     </style>
     <!-- === moments 固定在 phone-screen 内的修复样式 (自动插入补丁) === -->
 <style>
@@ -5313,6 +5327,9 @@ html, body {
 </head>
 
 <body>
+<!-- ▼▼▼ 在这里粘贴下面这一行代码 ▼▼▼ -->
+<input type="file" id="card-import-input" accept=".json,.png" style="display: none;">
+<!-- ▲▲▲ 粘贴结束 ▲▲▲ -->
 <div class="phone-screen">
 	<!-- 在 <div class="phone-screen"> 之后添加 -->
 <div id="global-notification-banner" class="notification-banner">
@@ -9218,6 +9235,238 @@ function hideTypingIndicator() {
     }
 }
 // ▲▲▲ 新函数到此结束 ▲▲▲
+// ▼▼▼ 将下面这一整块缺失的代码，粘贴到 setupChatListScreen() 函数的前面 ▼▼▼
+
+// ===============================================================
+// START: 角色卡导入功能核心函数 (修复缺失)
+// ===============================================================
+
+/**
+ * 处理从文件输入框选择的角色卡文件
+ * @param {Event} event - 文件输入框的 change 事件
+ */
+function handleCardImport(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (file.name.endsWith('.png')) {
+        handlePngImport(file);
+    } else if (file.name.endsWith('.json')) {
+        handleJsonImport(file);
+    } else {
+        showToast('不支持的文件格式，请选择 .png 或 .json 文件');
+    }
+
+    // 清空输入框，以便下次可以选择相同的文件
+    event.target.value = null;
+}
+
+/**
+ * 处理 .json 格式的角色卡
+ * @param {File} file - 用户选择的 .json 文件
+ */
+function handleJsonImport(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const cardData = JSON.parse(e.target.result);
+            // JSON 文件没有内嵌图片，使用默认头像
+            const defaultAvatar = 'https://i.postimg.cc/Y96LPskq/o-o-2.jpg';
+            createCharacterFromCard(cardData, defaultAvatar);
+        } catch (error) {
+            console.error("JSON 解析失败:", error);
+            showToast(`导入失败: ${error.message}`);
+        }
+    };
+    reader.readAsText(file);
+}
+
+// ▼▼▼ 用这个新的、兼容性更强的函数，替换掉旧的 handlePngImport ▼▼▼
+
+/**
+ * 处理 .png 格式的角色卡 (兼容新版 "chara" 和旧版 "tau_character" 关键词)
+ * @param {File} file - 用户选择的 .png 文件
+ */
+function handlePngImport(file) {
+    // 第一步：读取图片本身作为头像
+    const imageReader = new FileReader();
+    imageReader.readAsDataURL(file);
+    imageReader.onload = (e) => {
+        const avatarUrl = e.target.result;
+
+        // 第二步：读取文件内容以提取内置的JSON数据
+        const dataReader = new FileReader();
+        dataReader.onload = (e) => {
+            try {
+                const text = e.target.result;
+                let startIndex = -1;
+
+                // --- 核心修复：增加对旧版 "tau_character" 关键词的兼容性检查 ---
+
+                // 1. 首先尝试查找新版关键词 "chara"
+                const newKeyword = "chara";
+                startIndex = text.indexOf(newKeyword);
+
+                // 2. 如果找不到，再尝试查找旧版关键词 "tau_character"
+                if (startIndex === -1) {
+                    const oldKeyword = "tau_character";
+                    startIndex = text.indexOf(oldKeyword);
+                }
+
+                // 3. 如果两个都找不到，则抛出错误
+                if (startIndex === -1) {
+                    throw new Error("PNG卡片中未找到 'chara' 或 'tau_character' 数据块。");
+                }
+                
+                // --- 修复结束 ---
+
+                const b64Regex = /[A-Za-z0-9+/=]{200,}/g;
+                // 从找到的关键词之后开始搜索
+                const textAfterKeyword = text.substring(startIndex);
+                const match = textAfterKeyword.match(b64Regex);
+
+                if (!match) {
+                    throw new Error("无法从PNG中提取角色数据。");
+                }
+
+                const b64Decoded = atob(match[0]);
+                const uint8Array = new Uint8Array(b64Decoded.length).map((_, i) => b64Decoded.charCodeAt(i));
+                const utf8String = new TextDecoder('utf-8').decode(uint8Array);
+                const cardData = JSON.parse(utf8String);
+
+                createCharacterFromCard(cardData, avatarUrl);
+            } catch (error) {
+                console.error("PNG 数据提取或解析失败:", error);
+                showToast(`导入失败: ${error.message}`);
+            }
+        };
+        dataReader.readAsText(file, 'latin1');
+    };
+}
+
+// ▲▲▲ 替换结束 ▲▲▲
+
+/**
+ * 根据解析出的角色卡数据和头像URL，创建新角色和世界书
+ * @param {object} cardData - 从 .json 或 .png 中解析出的角色数据对象
+ * @param {string} avatarUrl - 角色的头像 Data URL 或默认 URL
+ */
+async function createCharacterFromCard(cardData, avatarUrl) {
+    // 兼容不同版本的角色卡格式 (v2/v3)
+    const data = cardData.data || cardData;
+    if (!data || !data.name) {
+        showToast('导入失败：角色卡格式不正确，缺少名称。');
+        return;
+    }
+
+    const worldBookIds = [];
+
+    if (data.character_book && data.character_book.entries && data.character_book.entries.length > 0) {
+        const categoryName = `${data.name} - 世界书`;
+        const newCategory = {
+            id: `cat_${Date.now()}`,
+            name: categoryName,
+            isCollapsed: false
+        };
+        db.worldBookCategories.push(newCategory);
+        showToast(`已自动创建分类: "${categoryName}"`);
+
+        let entryCounter = 1;
+        for (const entry of data.character_book.entries) {
+            if (!entry.content) continue;
+            const contentParts = entry.content.split('---').map(part => part.trim()).filter(part => part.length > 0);
+            for (const partContent of contentParts) {
+                const newWorldBook = {
+                    id: `wb_${Date.now()}_${entryCounter}`,
+                    name: `${data.name} - 条目 ${entryCounter}`,
+                    content: partContent,
+                    position: 'before',
+                    categoryId: newCategory.id
+                };
+                db.worldBooks.push(newWorldBook);
+                worldBookIds.push(newWorldBook.id);
+                entryCounter++;
+            }
+        }
+    }
+
+    const newChar = {
+        id: `char_${Date.now()}`,
+        realName: data.name,
+        isOfflineMode: false,
+        remarkName: data.name,
+        persona: data.description || '',
+        avatar: avatarUrl,
+        myName: '我',
+        myPersona: '',
+        myAvatar: 'https://i.postimg.cc/GtbTnxhP/o-o-1.jpg',
+        theme: 'white_pink',
+        maxMemory: 10,
+        chatBg: '',
+        history: [],
+        diaries: [],
+        messageCountSinceLastDiary: 0,
+        memories: [],
+        isPinned: false,
+        status: '在线',
+        worldBookIds: worldBookIds,
+        useCustomBubbleCss: false,
+        customBubbleCss: '',
+        pendingMessages: [],
+        aiProactiveChatEnabled: false,
+        aiProactiveChatDelay: 0,
+        isBlockedByUser: false,
+        isBlockedByAi: false,
+        offlineSettings: {
+            fontSize: 16,
+            useCustomWordCount: false,
+            minWords: 300,
+            maxWords: 500,
+            useCustomCss: true,
+            customCss: '',
+            preset: 'default_dark'
+        },
+        userBlockTimestamp: null,
+        aiBlockTimestamp: null,
+        blockEndTime: null,
+    };
+
+    if (data.character_book && data.character_book.entries && data.character_book.entries.length > 0) {
+        const regexEntries = data.character_book.entries.filter(entry => entry.use_regex && entry.keys.length > 0 && entry.content);
+        if (regexEntries.length > 0) {
+            const categoryName = data.name;
+            let category = db.rendererCategories.find(c => c.name === categoryName);
+            if (!category) {
+                category = { id: `rend_cat_${Date.now()}`, name: categoryName };
+                db.rendererCategories.push(category);
+            }
+            regexEntries.forEach((entry, index) => {
+                const newRule = {
+                    id: `rend_rule_${Date.now()}_${index}`,
+                    name: entry.comment || `${data.name} 规则 ${index + 1}`,
+                    regex: entry.keys.join('|'),
+                    html: entry.content,
+                    characterIds: [newChar.id],
+                    enabled: entry.enabled,
+                    categoryId: category.id
+                };
+                db.renderers.push(newRule);
+            });
+            showToast(`已为“${data.name}”自动导入 ${regexEntries.length} 条渲染规则！`);
+        }
+    }
+
+    db.characters.push(newChar);
+    await saveData();
+    renderChatList();
+    showToast(`角色“${newChar.remarkName}”已成功导入！`);
+}
+
+// ===============================================================
+// END: 角色卡导入功能核心函数
+// ===============================================================
+
+// ▲▲▲ 粘贴到这里结束 ▲▲▲
         const init = async () => {
         	// 在 init 函数的最顶部添加
 if (!db.userDiaries) {
@@ -12847,9 +13096,10 @@ function handleJsonImport(file) {
     };
     reader.readAsText(file);
 }
+// ▼▼▼ 用这个新的、兼容性更强的函数，替换掉旧的 handlePngImport ▼▼▼
 
 /**
- * 处理 .png 格式的角色卡 (包含图片和内置数据) - 已修正乱码问题
+ * 处理 .png 格式的角色卡 (兼容新版 "chara" 和旧版 "tau_character" 关键词)
  * @param {File} file - 用户选择的 .png 文件
  */
 function handlePngImport(file) {
@@ -12864,31 +13114,40 @@ function handlePngImport(file) {
         dataReader.onload = (e) => {
             try {
                 const text = e.target.result;
-                // SillyTavern 将 Base64 编码的 JSON 存储在 "chara" 关键词之后
-                const keyword = "chara";
-                const startIndex = text.indexOf(keyword);
+                let startIndex = -1;
 
+                // --- 核心修复：增加对旧版 "tau_character" 关键词的兼容性检查 ---
+
+                // 1. 首先尝试查找新版关键词 "chara"
+                const newKeyword = "chara";
+                startIndex = text.indexOf(newKeyword);
+
+                // 2. 如果找不到，再尝试查找旧版关键词 "tau_character"
                 if (startIndex === -1) {
-                    throw new Error("PNG卡片中未找到 'chara' 数据块。");
+                    const oldKeyword = "tau_character";
+                    startIndex = text.indexOf(oldKeyword);
                 }
 
-                // 提取可能是 Base64 的长字符串
-                const b64Regex = /[A-Za-z0-9+/=]{200,}/g; // 查找足够长的Base64字符串
-                const textAfterKeyword = text.substring(startIndex + keyword.length);
+                // 3. 如果两个都找不到，则抛出错误
+                if (startIndex === -1) {
+                    throw new Error("PNG卡片中未找到 'chara' 或 'tau_character' 数据块。");
+                }
+                
+                // --- 修复结束 ---
+
+                const b64Regex = /[A-Za-z0-9+/=]{200,}/g;
+                // 从找到的关键词之后开始搜索
+                const textAfterKeyword = text.substring(startIndex);
                 const match = textAfterKeyword.match(b64Regex);
 
                 if (!match) {
                     throw new Error("无法从PNG中提取角色数据。");
                 }
 
-                // ▼▼▼ 核心修正：使用 TextDecoder 处理 UTF-8 编码 ▼▼▼
-                const b64Decoded = atob(match[0]); // Base64解码为二进制字符串
-                // 将二进制字符串转换为Uint8Array字节数组
+                const b64Decoded = atob(match[0]);
                 const uint8Array = new Uint8Array(b64Decoded.length).map((_, i) => b64Decoded.charCodeAt(i));
-                // 使用UTF-8解码器将字节数组转换为正确的字符串
                 const utf8String = new TextDecoder('utf-8').decode(uint8Array);
                 const cardData = JSON.parse(utf8String);
-                // ▲▲▲ 修正结束 ▲▲▲
 
                 createCharacterFromCard(cardData, avatarUrl);
             } catch (error) {
@@ -12896,10 +13155,11 @@ function handlePngImport(file) {
                 showToast(`导入失败: ${error.message}`);
             }
         };
-        // 注意：这里仍然使用 'latin1' 来读取原始字节流，这是正确的
         dataReader.readAsText(file, 'latin1');
     };
 }
+
+// ▲▲▲ 替换结束 ▲▲▲
 /**
  * 根据解析出的角色卡数据和头像URL，创建新角色和世界书（已更新分类和条目拆分逻辑）
  * @param {object} cardData - 从 .json 或 .png 中解析出的角色数据对象
