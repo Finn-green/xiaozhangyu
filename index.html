@@ -1358,8 +1358,8 @@
             bottom: 0;
             left: 0;
             right: 0;
-            height: 35%;
-            max-height: 250px;
+            height: 80%;
+            max-height: 400px;
             background: #f7f7f7;
             border-top-left-radius: 20px;
             border-top-right-radius: 20px;
@@ -5538,6 +5538,11 @@ html, body {
             <div class="header"><span>我的表情</span><button class="btn btn-secondary btn-small" id="batch-add-sticker-btn">批量添加</button>
                 <button class="btn btn-primary btn-small" id="add-new-sticker-btn">添加新表情</button>       
            </div>
+    <!-- ▼▼▼ 在这里粘贴新的搜索栏HTML ▼▼▼ -->
+    <div class="sticker-search-bar" style="padding: 0 15px 10px; border-bottom: 1px solid #eee;">
+        <input type="search" id="sticker-search-input" placeholder="搜索表情包..." style="width: 100%; padding: 8px 12px; border-radius: 10px; border: 1px solid #ddd; font-size: 14px;">
+    </div>
+    <!-- ▲▲▲ 粘贴结束 ▲▲▲ -->
             <div class="sticker-grid" id="sticker-grid-container"></div>
         </div>
     </div>
@@ -13996,6 +14001,23 @@ case 'diary':
 });
 
 // ▲▲▲ 添加结束 ▲▲▲
+
+    // ▼▼▼ 在 setupChatRoom 函数的末尾添加 ▼▼▼
+
+    // --- 新增：为编辑弹窗的按钮绑定事件 ---
+    const editMessageForm = document.getElementById('edit-message-form');
+    const cancelEditModalBtn = document.getElementById('cancel-edit-modal-btn');
+
+    editMessageForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        saveMessageEdit(); // 表单提交时保存
+    });
+
+    cancelEditModalBtn.addEventListener('click', () => {
+        cancelMessageEdit(); // 取消按钮点击时取消
+    });
+    
+    // ▲▲▲ 添加结束 ▲▲▲
 }
 // ... 在 init() 函数的末尾 }; 之前 ...
 
@@ -14093,6 +14115,31 @@ menuItems.push({
     if (!isImageRecognitionMsg && !isVoiceMessage && !isStickerMessage && !isPhotoVideoMessage && !isTransferMessage && !isGiftMessage && !isInvisibleMessage) {
         menuItems.push({label: '编辑', action: () => startMessageEdit(messageId)});
     }
+// ▼▼▼ 在这里粘贴新的代码 ▼▼▼
+
+    if (currentChatType === 'private') {
+        const character = db.characters.find(c => c.id === currentChatId);
+        if (character && character.isOfflineMode) {
+            menuItems.push({
+                label: '修改状态',
+                action: async () => {
+                    const currentStatus = character.status || '在线';
+                    const newStatus = prompt(`请输入“${character.remarkName}”的新状态：`, currentStatus);
+
+                    // 如果用户输入了新状态（并且没有点取消）
+                    if (newStatus !== null) {
+                        character.status = newStatus.trim(); // 更新数据
+                        await saveData(); // 保存更改
+                        
+                        // 立即更新聊天界面顶部的状态显示
+                        document.getElementById('chat-room-status-text').textContent = character.status;
+                        showToast('角色状态已更新');
+                    }
+                }
+            });
+        }
+    }
+    // --- 新增结束 ---    
     menuItems.push({label: '删除', action: () => enterMultiSelectMode(messageId)});
 
             if (menuItems.length > 0) {
@@ -14100,74 +14147,121 @@ menuItems.push({
             }
         }
 
-        function startMessageEdit(messageId) {
-            exitMultiSelectMode();
-            editingMessageId = messageId;
-            const chat = (currentChatType === 'private') ? db.characters.find(c => c.id === currentChatId) : db.groups.find(g => g.id === currentChatId);
-            const message = chat.history.find(m => m.id === messageId);
-            if (!message) return;
-            const match = message.content.match(/\[.*?的消息：([\s\S]+)\]/);
-            const contentToEdit = match ? match[1].trim() : message.content;
-            messageEditInput.value = contentToEdit;
-            messageInputDefault.style.display = 'none';
-            messageEditBar.style.display = 'flex';
-            messageEditInput.focus();
-        }
+// ▼▼▼ 用这个新函数，替换旧的 startMessageEdit ▼▼▼
 
-        async function saveMessageEdit() {
-            const chat = (currentChatType === 'private') ? db.characters.find(c => c.id === currentChatId) : db.groups.find(g => g.id === currentChatId);
-            const messageIndex = chat.history.findIndex(m => m.id === editingMessageId);
-            if (messageIndex === -1) return;
-            const newText = messageEditInput.value.trim();
-            if (newText) {
-                const oldContent = chat.history[messageIndex].content;
-                const prefixMatch = oldContent.match(/(\[.*?的消息：)[\s\S]+\]/);
-                const prefix = prefixMatch ? prefixMatch[1] : '';
-                const newContent = `${prefix}${newText}]`;
-                chat.history[messageIndex].content = newContent;
-                if (chat.history[messageIndex].parts) {
-                    chat.history[messageIndex].parts = [{type: 'text', text: newContent}];
-                }
-                await saveData();
-                currentPage = 1;
-                renderMessages(false, true);
-                renderChatList();
-            }
-            cancelMessageEdit();
-        }
+function startMessageEdit(messageId) {
+    exitMultiSelectMode(); // 保持：退出多选模式
+    
+    const chat = (currentChatType === 'private') ? db.characters.find(c => c.id === currentChatId) : db.groups.find(g => g.id === currentChatId);
+    const message = chat.history.find(m => m.id === messageId);
+    if (!message) return;
 
-        function cancelMessageEdit() {
-            editingMessageId = null;
-            messageInputDefault.style.display = 'flex';
-            messageEditBar.style.display = 'none';
-        }
+    // 从消息内容中提取纯文本
+    const match = message.content.match(/\[.*?的消息：([\s\S]+)\]/);
+    const contentToEdit = match ? match[1].trim() : message.content;
 
-        function enterMultiSelectMode(initialMessageId) {
-            isInMultiSelectMode = true;
-            chatRoomHeaderDefault.style.display = 'none';
-            chatRoomHeaderSelect.style.display = 'flex';
-            document.querySelector('.chat-input-wrapper').style.display = 'none';
-            multiSelectBar.classList.add('visible');
-            chatRoomScreen.classList.add('multi-select-active');
-            selectedMessageIds.clear();
-            if (initialMessageId) {
-                toggleMessageSelection(initialMessageId);
-            }
-        }
+    // 获取新弹窗的元素
+    const modal = document.getElementById('edit-message-modal');
+    const textarea = document.getElementById('message-edit-textarea');
+    const idInput = document.getElementById('editing-message-id-modal');
 
-        function exitMultiSelectMode() {
-            isInMultiSelectMode = false;
-            chatRoomHeaderDefault.style.display = 'flex';
-            chatRoomHeaderSelect.style.display = 'none';
-            document.querySelector('.chat-input-wrapper').style.display = 'block';
-            multiSelectBar.classList.remove('visible');
-            chatRoomScreen.classList.remove('multi-select-active');
-            selectedMessageIds.forEach(id => {
-                const el = messageArea.querySelector(`.message-wrapper[data-id="${id}"]`);
-                if (el) el.classList.remove('multi-select-selected');
-            });
-            selectedMessageIds.clear();
+    // 将数据填充到弹窗中
+    idInput.value = messageId;
+    textarea.value = contentToEdit;
+    
+    // 显示弹窗
+    modal.classList.add('visible');
+    textarea.focus(); // 自动聚焦到文本框
+}
+
+// ▲▲▲ 替换结束 ▲▲▲
+
+// ▼▼▼ 用这两个新函数，替换旧的 saveMessageEdit 和 cancelMessageEdit ▼▼▼
+
+async function saveMessageEdit() {
+    const modal = document.getElementById('edit-message-modal');
+    const textarea = document.getElementById('message-edit-textarea');
+    const messageId = document.getElementById('editing-message-id-modal').value;
+
+    const chat = (currentChatType === 'private') ? db.characters.find(c => c.id === currentChatId) : db.groups.find(g => g.id === currentChatId);
+    const messageIndex = chat.history.findIndex(m => m.id === messageId);
+    if (messageIndex === -1) return;
+
+    const newText = textarea.value.trim();
+    if (newText) {
+        const oldContent = chat.history[messageIndex].content;
+        const prefixMatch = oldContent.match(/(\[.*?的消息：)[\s\S]+\]/);
+        const prefix = prefixMatch ? prefixMatch[1] : `[${(currentChatType === 'private' ? chat.myName : chat.me.nickname)}的消息：`;
+        
+        const newContent = `${prefix}${newText}]`;
+        chat.history[messageIndex].content = newContent;
+        if (chat.history[messageIndex].parts) {
+            chat.history[messageIndex].parts = [{type: 'text', text: newContent}];
         }
+        await saveData();
+        
+        // 刷新UI
+        renderMessages(false, true);
+        renderChatList();
+    }
+    
+    // 关闭弹窗
+    modal.classList.remove('visible');
+}
+
+function cancelMessageEdit() {
+    // 现在这个函数的功能就是关闭弹窗
+    document.getElementById('edit-message-modal').classList.remove('visible');
+}
+
+// ▲▲▲ 替换结束 ▲▲▲
+
+// ▼▼▼ 用这个新函数，替换旧的 enterMultiSelectMode ▼▼▼
+
+function enterMultiSelectMode(initialMessageId) {
+    isInMultiSelectMode = true;
+    chatRoomHeaderDefault.style.display = 'none';
+    chatRoomHeaderSelect.style.display = 'flex';
+    
+    // --- 核心修复：在这里增加底部内边距 ---
+    const multiSelectBarHeight = multiSelectBar.offsetHeight || 70; // 获取操作栏高度，如果获取失败则用一个默认值
+    messageArea.style.paddingBottom = `${multiSelectBarHeight}px`; // 将内边距设置为操作栏的高度
+    // --- 修复结束 ---
+
+    document.querySelector('.chat-input-wrapper').style.display = 'none';
+    multiSelectBar.classList.add('visible');
+    chatRoomScreen.classList.add('multi-select-active');
+    selectedMessageIds.clear();
+    if (initialMessageId) {
+        toggleMessageSelection(initialMessageId);
+    }
+
+}
+
+// ▲▲▲ 替换结束 ▲▲▲
+
+// ▼▼▼ 用这个新函数，替换旧的 exitMultiSelectMode ▼▼▼
+
+function exitMultiSelectMode() {
+    isInMultiSelectMode = false;
+    chatRoomHeaderDefault.style.display = 'flex';
+    chatRoomHeaderSelect.style.display = 'none';
+    
+    // --- 核心修复：在这里恢复（移除）底部内边距 ---
+    messageArea.style.paddingBottom = ''; // 清空之前设置的内边距，恢复默认值
+    // --- 修复结束 ---
+
+    document.querySelector('.chat-input-wrapper').style.display = 'block';
+    multiSelectBar.classList.remove('visible');
+    chatRoomScreen.classList.remove('multi-select-active');
+    selectedMessageIds.forEach(id => {
+        const el = messageArea.querySelector(`.message-wrapper[data-id="${id}"]`);
+        if (el) el.classList.remove('multi-select-selected');
+    });
+    selectedMessageIds.clear();
+}
+
+// ▲▲▲ 替换结束 ▲▲▲
 
         function toggleMessageSelection(messageId) {
             const el = messageArea.querySelector(`.message-wrapper[data-id="${messageId}"]`);
@@ -17687,16 +17781,32 @@ await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 400));
         }
 
         function renderStickerGrid() {
-            stickerGridContainer.innerHTML = '';
-            if (db.myStickers.length === 0) {
-                stickerGridContainer.innerHTML = '<p style="color:#aaa; text-align:center;">还没有表情包，快去添加吧！</p>';
-                return;
-            }
-            db.myStickers.forEach(sticker => {
-                const item = document.createElement('div');
-                item.className = 'sticker-item';
-                item.innerHTML = `<img src="${sticker.data}" alt="${sticker.name}"><span>${sticker.name}</span>`;
-                item.addEventListener('click', () => sendSticker(sticker));
+// --- 新增：获取搜索框和关键词 ---
+    const searchInput = document.getElementById('sticker-search-input');
+    const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+
+    stickerGridContainer.innerHTML = '';
+    
+    // --- 新增：根据关键词筛选表情包 ---
+    const filteredStickers = db.myStickers.filter(sticker => 
+        sticker.name.toLowerCase().includes(searchTerm)
+    );
+
+    if (filteredStickers.length === 0) {
+        if (searchTerm) {
+            stickerGridContainer.innerHTML = `<p style="color:#aaa; text-align:center; grid-column: 1 / -1;">没有找到与“${escapeHTML(searchTerm)}”相关的表情包。</p>`;
+        } else {
+            stickerGridContainer.innerHTML = '<p style="color:#aaa; text-align:center; grid-column: 1 / -1;">还没有表情包，快去添加吧！</p>';
+        }
+        return;
+    }
+    
+    // --- 修改：使用筛选后的列表进行渲染 ---
+    filteredStickers.forEach(sticker => {
+        const item = document.createElement('div');
+        item.className = 'sticker-item';
+        item.innerHTML = `<img src="${sticker.data}" alt="${sticker.name}"><span>${sticker.name}</span>`;
+        item.addEventListener('click', () => sendSticker(sticker));
                 item.addEventListener('mousedown', (e) => {
                     if (e.button !== 0) return;
                     e.stopPropagation();
@@ -19008,6 +19118,19 @@ function setupStickerSystem() {
                 stickerActionSheet.classList.remove('visible');
                 currentStickerActionTarget = null;
             });
+
+    // ▼▼▼ 在 setupStickerSystem 函数的末尾添加 ▼▼▼
+
+    // --- 新增：为表情包搜索框绑定实时输入事件 ---
+    const stickerSearchInput = document.getElementById('sticker-search-input');
+    if (stickerSearchInput) {
+        stickerSearchInput.addEventListener('input', () => {
+            // 每次输入都重新渲染表情列表
+            renderStickerGrid();
+        });
+    }
+    
+    // ▲▲▲ 添加结束 ▲▲▲
         }
 
 
@@ -31440,6 +31563,26 @@ fileInput.addEventListener('change', async (e)=>{
 <!-- END: 心灵羁绊 - 绑定功能界面 -->
 <!-- =============================================================== -->	
 <!-- =============================================================== -->
+<!-- ▼▼▼ 在 </body> 标签前粘贴新的弹窗HTML ▼▼▼ -->
+
+<!-- 新增：消息编辑弹窗 -->
+<div id="edit-message-modal" class="modal-overlay">
+    <div class="modal-window">
+        <h3>编辑消息</h3>
+        <form id="edit-message-form">
+            <input type="hidden" id="editing-message-id-modal">
+            <div class="form-group">
+                <textarea id="message-edit-textarea" rows="8" required></textarea>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button type="button" class="btn btn-neutral" id="cancel-edit-modal-btn" style="flex: 1;">取消</button>
+                <button type="submit" class="btn btn-primary" style="flex: 1;">保存修改</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ▲▲▲ 粘贴结束 ▲▲▲ -->
 <!-- 放在 </body> 标签之前 -->
 <input type="file" id="card-import-input" accept=".json,.png" style="display: none;">
 	<!-- === 新增：长截图预览弹窗 === -->
