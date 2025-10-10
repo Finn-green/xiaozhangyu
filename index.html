@@ -8081,7 +8081,7 @@ if (!charData.offlineSettings) {
         useCustomWordCount: false,
         minWords: 300,
         maxWords: 500,
-        useCustomCss: false,
+        useCustomCss: true,
         customCss: '',
         preset: 'default_dark'
     };
@@ -12991,7 +12991,7 @@ offlineSettings: {
     useCustomWordCount: false, // 默认不启用自定义字数
     minWords: 300, // 默认最小字数
     maxWords: 500, // 默认最大字数
-    useCustomCss: false, // 默认不使用自定义CSS
+    useCustomCss: true, // 默认启用线下模式专属气泡
     customCss: '', // 自定义CSS内容
     preset: 'default_dark' // 默认预设
 },
@@ -18360,10 +18360,26 @@ const savedPreset = allPresets.find(p => p.name === (offlineSettings.preset || '
 presetSelect.value = savedPreset ? savedPreset.name : '默认 · 暗夜玻璃';
 // ▲▲▲ 替换结束 ▲▲▲
 
-useCustomCss.checked = offlineSettings.useCustomCss || false;
+// ▼▼▼ 在这里进行修改 ▼▼▼
+useCustomCss.checked = offlineSettings.useCustomCss !== false; // 修正：如果该设置不存在(undefined)，也默认为true
+// ▲▲▲ 修改结束 ▲▲▲
 customCssContainer.style.display = useCustomCss.checked ? 'block' : 'none';
-customCssTextarea.value = offlineSettings.customCss || '';
+// ▼▼▼ 在这里进行修改 ▼▼▼
 
+// --- 核心逻辑修正：智能填充CSS文本框 ---
+if (useCustomCss.checked && !offlineSettings.customCss) {
+    // 如果“启用”被勾选，但数据库里没有保存任何自定义CSS
+    // 那么就主动从预设中读取“默认 · 暗夜玻璃”的CSS并填充到文本框
+    const defaultPreset = offlineBubblePresets['default_dark'];
+    if (defaultPreset) {
+        customCssTextarea.value = defaultPreset.css.trim();
+    }
+} else {
+    // 否则，正常加载数据库里保存的CSS（可能是空的，也可能是用户自己写的）
+    customCssTextarea.value = offlineSettings.customCss || '';
+}
+
+// ▲▲▲ 修改结束 ▲▲▲
 // 绑定事件
 fontSizeRange.oninput = () => { fontSizeValue.textContent = `${fontSizeRange.value}px`; };
 useCustomWordCount.onchange = () => { wordCountFields.style.display = useCustomWordCount.checked ? 'block' : 'none'; };
