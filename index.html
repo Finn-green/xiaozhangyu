@@ -3305,6 +3305,96 @@ html, body {
     overflow-x: hidden;
 }
 
+/* ▼▼▼ 在 <style> 标签末尾添加 ▼▼▼ */
+
+/* 设置分类的整体样式 */
+.settings-category {
+    margin-bottom: 10px;
+    border-radius: 12px;
+    background-color: #fff;
+    border: 1px solid #fce4ec;
+    overflow: hidden; /* 防止内容溢出圆角 */
+    transition: background-color 0.3s ease;
+}
+
+/* 展开时的样式 */
+.settings-category[open] {
+    background-color: #fff8fa;
+}
+
+/* 分类标题 (summary) 的样式 */
+.settings-category summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    font-weight: 600;
+    color: var(--secondary-color);
+    cursor: pointer;
+    outline: none; /* 移除点击时的默认边框 */
+    list-style: none; /* 隐藏默认的三角箭头 */
+}
+
+/* 自定义箭头图标 */
+.settings-category summary::after {
+    content: '›';
+    font-size: 24px;
+    font-weight: bold;
+    color: #f8bbd0;
+    transform: rotate(90deg);
+    transition: transform 0.3s ease;
+}
+
+/* 展开时，箭头旋转 */
+.settings-category[open] summary::after {
+    transform: rotate(-90deg);
+}
+
+/* 隐藏浏览器默认的 summary 箭头 */
+.settings-category summary::-webkit-details-marker {
+    display: none;
+}
+
+/* 包裹设置内容的容器，用于添加内边距 */
+.settings-content-wrapper {
+    padding: 0 15px 15px 15px;
+    border-top: 1px solid #fce4ec;
+}
+
+/* ▲▲▲ 添加结束 ▲▲▲ */
+
+/* ▼▼▼ 在 <style> 标签末尾添加 ▼▼▼ */
+
+/* 更新日志列表的美化样式 */
+#update-content ul {
+    list-style: none;
+    padding-left: 10px;
+    font-size: 14px;
+    color: #555;
+}
+
+#update-content li {
+    padding-left: 20px;
+    position: relative;
+    margin-bottom: 12px;
+    line-height: 1.6;
+}
+
+#update-content li::before {
+    content: '‣'; /* 使用一个漂亮的箭头作为列表项标记 */
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: var(--primary-color);
+    font-weight: bold;
+    font-size: 18px;
+}
+
+#update-content li strong {
+    color: var(--secondary-color);
+}
+
+/* ▲▲▲ 添加结束 ▲▲▲ */
     </style>
     <!-- === moments 固定在 phone-screen 内的修复样式 (自动插入补丁) === -->
 <style>
@@ -5918,156 +6008,198 @@ html, body {
         </div>
     </div>
     <!-- Private Chat Settings -->
-    <div id="chat-settings-sidebar" class="settings-sidebar">
-        <div class="header">聊天设置</div>
-        <div class="content">
-            <form id="chat-settings-form">
-                             <div class="avatar-setting">
-    <div class="avatar-container-setting" id="char-avatar-container-setting">
-        <img src="" alt="角色头像" id="setting-char-avatar-preview" class="avatar-preview">
-        <!-- 头像框将动态添加在这里 -->
-    </div>
-    <button type="button" class="btn btn-small btn-primary avatar-frame-btn" data-target="private-ai">🌟</button>
-    <input type="file" id="setting-char-avatar-upload" accept="image/*" style="display:none;">
-    <label for="setting-char-avatar-upload" class="btn btn-primary" style="flex-grow:1;">更换角色头像</label>
-</div>
-                <div class="form-group"><label for="setting-char-remark">角色备注 (昵称)</label><input type="text"
-                                                                                                       id="setting-char-remark">
-                </div>
-                <div class="form-group"><label for="setting-char-persona">角色人设</label><textarea
-                        id="setting-char-persona" placeholder="详细描述角色的性格、背景、说话风格等。"></textarea></div>
-                <hr style="border:none; border-top:1px solid #eee; margin: 20px 0;">
-           <div class="avatar-setting">
-    <div class="avatar-container-setting" id="my-avatar-container-setting">
-        <img src="" alt="我的头像" id="setting-my-avatar-preview" class="avatar-preview">
-        <!-- 头像框将动态添加在这里 -->
-    </div>
-    <button type="button" class="btn btn-small btn-secondary avatar-frame-btn" data-target="private-user">🌟</button>
-    <input type="file" id="setting-my-avatar-upload" accept="image/*" style="display:none;">
-    <label for="setting-my-avatar-upload" class="btn btn-secondary" style="flex-grow:1;">更换我的头像</label>
-</div>
-                <div class="form-group"><label for="setting-my-name">我的姓名</label><input type="text"
-                                                                                            id="setting-my-name"></div>
-                <div class="form-group"><label for="setting-my-persona">我的人设</label><textarea
-                        id="setting-my-persona" placeholder="描述你希望在对话中扮演的形象。"></textarea>
+<!-- ▼▼▼ 用这个全新的、完整的侧边栏代码替换旧的 ▼▼▼ -->
+<div id="chat-settings-sidebar" class="settings-sidebar">
+    <div class="header">聊天设置</div>
+    <div class="content">
+        <form id="chat-settings-form">
 
-
-<!-- 管理 Modal（样式与气泡预设管理一致） -->
-<div id="mypersona-presets-modal" class="modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.35);justify-content:center;align-items:center;z-index:9999;">
-  <div class="modal-window" style="max-width:520px;background:var(--panel-bg,#fff);padding:14px;border-radius:10px;box-shadow:0 12px 36px rgba(10,10,20,0.12);">
-    <h3 style="margin:0 0 10px 0;font-size:16px;">管理我的人设预设</h3>
-    <div id="mypersona-presets-list" style="max-height:340px; overflow:auto; margin-bottom:12px;"></div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;">
-      <button type="button" id="mypersona-close-modal" class="btn btn-primary" style="padding:8px 12px;border-radius:8px;">关闭</button>
-    </div>
-  </div>
-</div>
-<!-- === /我的人设预设控制 === -->
-</div>
-                <hr style="border:none; border-top:1px solid #eee; margin: 20px 0;">
-                <div class="form-group">
-                    <button type="button" class="btn btn-secondary" id="link-world-book-btn">关联世界书</button>
-                </div>
-                <div class="form-group"><label for="setting-theme-color">主题颜色 (对方/我方)</label><select
-                        id="setting-theme-color"></select></div>
-
-                <hr style="border:none; border-top:1px solid #eee; margin: 20px 0;">
-                <div class="form-group">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <label for="setting-use-custom-css" style="margin-bottom:0;">自定义气泡样式</label>
-                        <input type="checkbox" id="setting-use-custom-css" style="width: auto;">
+            <!-- 类别一：角色核心设定 -->
+            <details class="settings-category">
+                <summary>角色核心设定</summary>
+                <div class="settings-content-wrapper">
+                    <div class="avatar-setting">
+                        <div class="avatar-container-setting" id="char-avatar-container-setting">
+                            <img src="" alt="角色头像" id="setting-char-avatar-preview" class="avatar-preview">
+                        </div>
+                        <button type="button" class="btn btn-small btn-primary avatar-frame-btn" data-target="private-ai">🌟</button>
+                        <input type="file" id="setting-char-avatar-upload" accept="image/*" style="display:none;">
+                        <label for="setting-char-avatar-upload" class="btn btn-primary" style="flex-grow:1;">更换角色头像</label>
                     </div>
-                    <div id="private-bubble-css-preview" class="bubble-css-preview"
-                         style="background: #fff; border: 1px solid #eee; border-radius: 10px; padding: 15px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px;">
+                    <div class="form-group">
+                        <label for="setting-char-remark">角色备注 (昵称)</label>
+                        <input type="text" id="setting-char-remark">
                     </div>
-                    <textarea id="setting-custom-bubble-css" rows="6"
-                              placeholder="在此输入CSS代码...&#10;例如：&#10;.message-bubble.sent { background-color: #A5D6A7; }&#10;.message-bubble.received { background-color: #E1E1E1; }"
-                              disabled></textarea>
-
-
-<!-- === 气泡预设控制（由 ChatGPT 插入） === -->
-<!-- 插入位置：自定义气泡样式 textarea 之后（已美化外观） -->
-<div class="panel panel-sm" style="padding:12px;border-radius:10px;border:1px solid var(--border-color,#e8e8ef);background:var(--panel-bg,#fff);box-shadow:var(--panel-shadow,0 4px 12px rgba(20,20,30,0.04));margin:10px 0;">
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-    <label for="bubble-preset-select" style="width:88px;color:var(--muted,#667);font-size:13px;">气泡预设</label>
-    <select id="bubble-preset-select" style="flex:1;padding:8px 10px;border-radius:8px;border:1px solid var(--input-border,#e6e6ea);background:var(--input-bg,#fff);font-size:14px;">
-      <option value="">— 选择预设 —</option>
-    </select>
-    <button type="button" id="apply-preset-btn" class="btn btn-primary" style="margin-left:8px;padding:7px 10px;border-radius:8px;">应用</button>
-  </div>
-
-  <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
-    <label style="width:88px;color:var(--muted,#667);font-size:13px;">外观操作</label>
-    <button type="button" id="save-preset-btn" class="btn" style="padding:7px 10px;border-radius:8px;">另存为预设</button>
-    <button type="button" id="manage-presets-btn" class="btn" style="padding:7px 10px;border-radius:8px;">管理</button>
-  </div>
-
-  
-</div>
-
-<!-- 管理预设 modal（样式微调） -->
-<div id="bubble-presets-modal" class="modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.35);justify-content:center;align-items:center;z-index:9999;">
-  <div class="modal-window" style="max-width:520px;background:var(--panel-bg,#fff);padding:14px;border-radius:10px;box-shadow:0 12px 36px rgba(10,10,20,0.12);">
-    <h3 style="margin:0 0 10px 0;font-size:16px;">管理气泡预设</h3>
-    <div id="bubble-presets-list" style="max-height:340px; overflow:auto; margin-bottom:12px;"></div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;">
-      <button type="button" id="close-presets-modal" class="btn btn-primary" style="padding:8px 12px;border-radius:8px;">关闭</button>
-    </div>
-  </div>
-</div>
-<!-- === /气泡预设控制（由 ChatGPT 插入） === -->
-
-
-                    <button type="button" class="btn btn-neutral" id="reset-custom-bubble-css-btn"
-                            style="margin-top: 10px; width: auto; padding: 5px 15px; font-size: 14px;">恢复默认
-                    </button>
+                    <div class="form-group">
+                        <label for="setting-char-persona">角色人设</label>
+                        <textarea id="setting-char-persona" placeholder="详细描述角色的性格、背景、说话风格等。"></textarea>
+                    </div>
                 </div>
-<hr style="border:none; border-top:1px solid #eee; margin: 20px 0;">
-<div class="form-group" style="display: flex; align-items: center; justify-content: space-between;">
-    <label for="setting-offline-mode" style="margin-bottom: 0;">开启线下模式 (仅此角色)</label>
-    <input type="checkbox" id="setting-offline-mode" style="width: auto; height: 20px;">
-</div>
-                <div class="form-group"><label for="setting-max-memory">最大记忆轮数</label><input type="number"
-                                                                                                   id="setting-max-memory"
-                                                                                                   value="10" min="1">
+            </details>
+
+            <!-- 类别二：我的设定 -->
+            <details class="settings-category">
+                <summary>我的设定</summary>
+                <div class="settings-content-wrapper">
+                    <div class="avatar-setting">
+                        <div class="avatar-container-setting" id="my-avatar-container-setting">
+                            <img src="" alt="我的头像" id="setting-my-avatar-preview" class="avatar-preview">
+                        </div>
+                        <button type="button" class="btn btn-small btn-secondary avatar-frame-btn" data-target="private-user">🌟</button>
+                        <input type="file" id="setting-my-avatar-upload" accept="image/*" style="display:none;">
+                        <label for="setting-my-avatar-upload" class="btn btn-secondary" style="flex-grow:1;">更换我的头像</label>
+                    </div>
+                    <div class="form-group">
+                        <label for="setting-my-name">我的姓名</label>
+                        <input type="text" id="setting-my-name">
+                    </div>
+                    <div class="form-group">
+                        <label for="setting-my-persona">我的人设</label>
+                        <textarea id="setting-my-persona" placeholder="描述你希望在对话中扮演的形象。"></textarea>
+                    </div>
                 </div>
-               <!-- === 修改为回忆记录按钮 开始 === -->
-<div class="form-group">
-    <button type="button" class="btn btn-secondary" id="show-memory-summary-btn">查看回忆记录</button>
-</div>
-<!-- === 修改为回忆记录按钮 结束 === --> 
-	<hr style="border:none; border-top:1px solid #eee; margin: 20px 0;">
-<!-- AI Proactive Chat Settings for Private Chat -->
-<div class="form-group">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-        <label for="private-ai-proactive-chat-toggle" style="margin-bottom:0;">开启AI后台回复</label>
-        <input type="checkbox" id="private-ai-proactive-chat-toggle" style="width: auto;">
+            </details>
+
+            <!-- 类别三：对话与记忆 -->
+            <details class="settings-category">
+                <summary>对话与记忆</summary>
+                <div class="settings-content-wrapper">
+                    <div class="form-group">
+                        <button type="button" class="btn btn-secondary" id="link-world-book-btn">关联世界书</button>
+                    </div>
+                    <div class="form-group">
+                        <label for="setting-max-memory">最大记忆轮数</label>
+                        <input type="number" id="setting-max-memory" value="10" min="1">
+                    </div>
+                    <div class="form-group">
+                        <button type="button" class="btn btn-secondary" id="show-memory-summary-btn">查看回忆记录</button>
+                    </div>
+                </div>
+            </details>
+
+            <!-- 类别四：外观与样式 -->
+            <details class="settings-category">
+                <summary>外观与样式</summary>
+                <div class="settings-content-wrapper">
+                    <div class="form-group">
+                        <label for="setting-theme-color">主题颜色 (对方/我方)</label>
+                        <select id="setting-theme-color"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="setting-chat-bg-upload" class="btn btn-primary">更换聊天背景</label>
+                        <input type="file" id="setting-chat-bg-upload" accept="image/*" style="display:none;">
+                    </div>
+                    <div class="form-group">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <label for="setting-use-custom-css" style="margin-bottom:0;">自定义气泡样式</label>
+                            <input type="checkbox" id="setting-use-custom-css" style="width: auto;">
+                        </div>
+                        <div id="private-bubble-css-preview" class="bubble-css-preview" style="background: #fff; border: 1px solid #eee; border-radius: 10px; padding: 15px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px;"></div>
+                        <textarea id="setting-custom-bubble-css" rows="6" placeholder="在此输入CSS代码...&#10;例如：&#10;.message-bubble.sent { background-color: #A5D6A7; }&#10;.message-bubble.received { background-color: #E1E1E1; }" disabled></textarea>
+                        <div class="panel panel-sm" style="padding:12px;border-radius:10px;border:1px solid var(--border-color,#e8e8ef);background:var(--panel-bg,#fff);box-shadow:var(--panel-shadow,0 4px 12px rgba(20,20,30,0.04));margin:10px 0;">
+                            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                                <label for="bubble-preset-select" style="width:88px;color:var(--muted,#667);font-size:13px;">气泡预设</label>
+                                <select id="bubble-preset-select" style="flex:1;padding:8px 10px;border-radius:8px;border:1px solid var(--input-border,#e6e6ea);background:var(--input-bg,#fff);font-size:14px;">
+                                    <option value="">— 选择预设 —</option>
+                                </select>
+                                <button type="button" id="apply-preset-btn" class="btn btn-primary" style="margin-left:8px;padding:7px 10px;border-radius:8px;">应用</button>
+                            </div>
+                            <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+                                <label style="width:88px;color:var(--muted,#667);font-size:13px;">外观操作</label>
+                                <button type="button" id="save-preset-btn" class="btn" style="padding:7px 10px;border-radius:8px;">另存为预设</button>
+                                <button type="button" id="manage-presets-btn" class="btn" style="padding:7px 10px;border-radius:8px;">管理</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-neutral" id="reset-custom-bubble-css-btn" style="margin-top: 10px; width: auto; padding: 5px 15px; font-size: 14px;">恢复默认</button>
+                    </div>
+                </div>
+            </details>
+
+            <!-- 类别五：线下模式专属设置 -->
+            <details class="settings-category">
+                <summary>线下模式专属设置</summary>
+                <div class="settings-content-wrapper">
+                    <div class="form-group">
+                        <label for="offline-font-size-range">剧情字号</label>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <input id="offline-font-size-range" type="range" min="12" max="24" step="1" style="flex:1;">
+                            <span id="offline-font-size-value" style="width:56px; text-align:right;">16px</span>
+                        </div>
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: center; justify-content: space-between;">
+                        <label for="offline-use-custom-word-count" style="margin-bottom: 0;">自定义字数范围</label>
+                        <input type="checkbox" id="offline-use-custom-word-count" style="width: auto; height: 20px;">
+                    </div>
+                    <div id="offline-word-count-fields" style="display: none; border-left: 3px solid #fce4ec; padding-left: 15px; margin-top: -10px; margin-bottom: 20px;">
+                        <div class="form-group">
+                            <label for="offline-min-words">最少字数</label>
+                            <input type="number" id="offline-min-words" min="50" value="300">
+                        </div>
+                        <div class="form-group">
+                            <label for="offline-max-words">最多字数</label>
+                            <input type="number" id="offline-max-words" min="100" value="500">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="offline-bubble-preset-select">气泡预设</label>
+                        <select id="offline-bubble-preset-select"></select>
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: center; justify-content: space-between;">
+                        <label for="offline-use-custom-css" style="margin-bottom: 0;">启用自定义CSS</label>
+                        <input type="checkbox" id="offline-use-custom-css" style="width: auto; height: 20px;">
+                    </div>
+                    <div class="form-group" id="offline-custom-css-container" style="display: none;">
+                        <textarea id="offline-custom-css" rows="6" placeholder="/* 示例： */\n.plot-bubble {\n  background: #333;\n  color: #fff;\n}"></textarea>
+                    </div>
+                    <div id="offline-presets-control" style="margin-top: 10px; padding: 12px; border-radius: 10px; border: 1px solid #fce4ec; background: #fff8fa;">
+                        <div style="display:flex; gap:8px; justify-content:flex-end;">
+                            <button type="button" id="offline-save-preset-btn" class="btn btn-secondary btn-small">另存为预设</button>
+                            <button type="button" id="offline-manage-presets-btn" class="btn btn-neutral btn-small">管理预设</button>
+                        </div>
+                    </div>
+                </div>
+            </details>
+
+            <!-- 类别六：高级功能 -->
+            <details class="settings-category">
+                <summary>高级功能</summary>
+                <div class="settings-content-wrapper">
+                    <div class="form-group" style="display: flex; align-items: center; justify-content: space-between;">
+                        <label for="setting-offline-mode" style="margin-bottom: 0;">开启线下模式 (仅此角色)</label>
+                        <input type="checkbox" id="setting-offline-mode" style="width: auto; height: 20px;">
+                    </div>
+                    <div class="form-group">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <label for="private-ai-proactive-chat-toggle" style="margin-bottom:0;">开启AI后台回复</label>
+                            <input type="checkbox" id="private-ai-proactive-chat-toggle" style="width: auto;">
+                        </div>
+                        <div id="private-ai-proactive-options" style="display: none;">
+                            <label for="private-ai-proactive-chat-delay">无回复超过 (分钟)</label>
+                            <input type="number" id="private-ai-proactive-chat-delay" min="1" placeholder="例如：30">
+                            <label for="private-ai-proactive-chat-interval" style="margin-top: 10px;">AI后台回复间隔时间 (分钟)</label>
+                            <input type="number" id="private-ai-proactive-chat-interval" min="1" placeholder="例如：60">
+                        </div>
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #eee; padding-top: 20px;">
+                        <label for="setting-share-stickers" style="margin-bottom: 0;">共享表情包</label>
+                        <input type="checkbox" id="setting-share-stickers" style="width: auto; height: 20px;">
+                    </div>
+                    <div class="form-group" style="margin-top: 20px;">
+                        <button type="button" class="btn btn-secondary" id="search-history-btn">搜索聊天记录</button>
+                    </div>
+                </div>
+            </details>
+
+            <button type="submit" class="btn btn-primary" style="margin-top: 20px;">保存设置</button>
+        </form>
+
+        <hr style="border:none; border-top:1px solid #eee; margin: 20px 0;">
+        <button type="button" class="btn btn-danger" id="block-user-btn">拉黑</button>
+        <hr style="border:none; border-top:1px solid #eee; margin: 20px 0;">
+        <button type="button" class="btn btn-danger" id="clear-chat-history-btn">清空聊天记录</button>
     </div>
-    <div id="private-ai-proactive-options" style="display: none;">
-        <label for="private-ai-proactive-chat-delay">无回复超过 (分钟)</label>
-        <input type="number" id="private-ai-proactive-chat-delay" min="1" placeholder="例如：30">
-        <label for="private-ai-proactive-chat-interval" style="margin-top: 10px;">AI后台回复间隔时间 (分钟)</label>
-        <input type="number" id="private-ai-proactive-chat-interval" min="1" placeholder="例如：60">
-    </div>
 </div>
-<!-- START: 共享表情包功能开关 -->
-<div class="form-group" style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #eee; padding-top: 20px;">
-    <label for="setting-share-stickers" style="margin-bottom: 0;">共享表情包</label>
-    <input type="checkbox" id="setting-share-stickers" style="width: auto; height: 20px;">
-</div>
-<!-- END: 共享表情包功能开关 -->
-                <div class="form-group"><label for="setting-chat-bg-upload" class="btn btn-primary">更换聊天背景</label><input
-                        type="file" id="setting-chat-bg-upload" accept="image/*" style="display:none;"></div>
-                <button type="submit" class="btn btn-primary">保存设置</button>
-            </form><hr style="border:none; border-top:1px solid #eee; margin: 20px 0;">
-            	<div class="form-group">
-            <button type="button" class="btn btn-secondary" id="search-history-btn">搜索聊天记录</button>
-        </div>
-<button type="button" class="btn btn-danger" id="block-user-btn">拉黑</button>
-            <hr style="border:none; border-top:1px solid #eee; margin: 20px 0;">
-            <button type="button" class="btn btn-danger" id="clear-chat-history-btn">清空聊天记录</button>
-        </div>
-    </div>
+<!-- ▲▲▲ 替换结束 ▲▲▲ -->
     <div id="world-book-selection-modal" class="modal-overlay">
         <div class="modal-window">
             <h3>选择要关联的世界书</h3>
@@ -6911,6 +7043,49 @@ document.getElementById('tutorial-screen').innerHTML = `<header class="app-heade
                 sent: {bg: 'rgba(173,216,230,0.9)', text: '#4A6F8A'}
             },
         };
+// ... 在 const colorThemes = { ... }; 的后面
+const offlineBubblePresets = {
+    'default_dark': {
+        name: '默认 · 暗夜玻璃',
+        css: `
+.plot-bubble {
+    font-family: 'Noto Serif SC', serif;
+    color: #f0f0f0;
+    line-height: 1.8;
+    padding: 1.5em 2em;
+    background: rgba(0, 0, 0, 0.5);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+.plot-bubble em {
+    font-style: italic;
+    color: #b0b0b0;
+}`
+    },
+    'light_paper': {
+        name: '白色玻璃', // <--- 名字已修改
+        css: `
+.plot-bubble {
+    font-family: 'Noto Serif SC', serif;
+    color: #333;
+    line-height: 1.8;
+    padding: 1.5em 2em;
+    background: rgba(255, 255, 255, 0.8);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.05);
+}
+.plot-bubble em {
+    font-style: italic;
+    color: #777;
+}`
+    }
+    // 'blue_ocean' 预设已被删除
+};
+// ... 后面是 let db = { ... };
 const defaultIcons = {
             'chat-list-screen': {name: '404', url: 'https://i.postimg.cc/VvQB8dQT/chan-143.png'},
             'api-settings-screen': {name: 'api', url: 'https://i.postimg.cc/50FqT8GL/chan-125.png'},
@@ -7900,6 +8075,19 @@ if (!db.homeProfile) {
                     if (!charData.worldBookIds) charData.worldBookIds = [];
                     if (charData.customBubbleCss === undefined) charData.customBubbleCss = '';
                     if (charData.useCustomBubbleCss === undefined) charData.useCustomBubbleCss = false;
+                    // ... 在 if (charData.useCustomBubbleCss === undefined) ... 的后面添加
+if (!charData.offlineSettings) {
+    charData.offlineSettings = {
+        fontSize: 16,
+        useCustomWordCount: false,
+        minWords: 300,
+        maxWords: 500,
+        useCustomCss: false,
+        customCss: '',
+        preset: 'default_dark'
+    };
+}
+// ... 后面是 return charData;
 // 为旧数据兼容用户日记
                     return charData;
                 }
@@ -12798,6 +12986,17 @@ async function createCharacterFromCard(cardData, avatarUrl) {
     aiProactiveChatDelay: 0,      // 新增
         isBlockedByUser: false,
         isBlockedByAi: false,
+// ... 在 isBlockedByAi: false, 的后面添加
+offlineSettings: {
+    fontSize: 16, // 默认字号
+    useCustomWordCount: false, // 默认不启用自定义字数
+    minWords: 300, // 默认最小字数
+    maxWords: 500, // 默认最大字数
+    useCustomCss: false, // 默认不使用自定义CSS
+    customCss: '', // 自定义CSS内容
+    preset: 'default_dark' // 默认预设
+},
+// ... 后面是 userBlockTimestamp: null,        
         userBlockTimestamp: null,
         aiBlockTimestamp: null,
         blockEndTime: null,
@@ -13087,7 +13286,17 @@ if (data.character_book && data.character_book.entries && data.character_book.en
                         } else {
                             const textMatch = lastMsg.content.match(/\[.*?的消息：([\s\S]+)\]/);
                             let text = textMatch ? textMatch[1].trim() : lastMsg.content.trim();
-                            lastMessageText = urlRegex.test(text) ? '[图片]' : text;
+                            // ▼▼▼ 在这里进行修改 ▼▼▼
+                            if (urlRegex.test(text)) {
+                                lastMessageText = '[图片]';
+                            } else {
+                                // 移除所有换行符，并截断到最多15个字符
+                                const cleanedText = text.replace(/(\r\n|\n|\r)/gm, " ").trim();
+                                lastMessageText = cleanedText.length > 15 
+                                    ? cleanedText.substring(0, 15) + '...' 
+                                    : cleanedText;
+                            }
+                            // ▲▲▲ 修改结束 ▲▲▲
                         }
                     } else {
                         const lastEverMsg = chat.history[chat.history.length - 1];
@@ -13716,6 +13925,7 @@ menuItems.push({
             checkAndUpdateUiForAiBlock();
             exitMultiSelectMode();
             cancelMessageEdit();
+            
 
             if (window.targetMessageId) {
                 const targetId = window.targetMessageId;
@@ -13896,76 +14106,293 @@ function createMessageBubbleElement(message) {
         wrapper.innerHTML = `<div class="system-notification-bubble">${bubbleText}</div>`;
         return wrapper;
     }
+// --- 剧情气泡专属渲染逻辑 (V3.0 - 最终修复版) ---
+    const plotRegex = /\[剧情:([\s\S]*?)\]/;
+    const plotMatch = message.content.match(plotRegex);
+    const characterForStyle = (currentChatType === 'private') ? db.characters.find(c => c.id === currentChatId) : null;
 
-// ▼▼▼ 在这里粘贴新的代码 ▼▼▼
-    // --- 线下模式专属剧情气泡渲染 ---
-    const chatForOfflineCheck = (currentChatType === 'private') ? db.characters.find(c => c.id === currentChatId) : null;
-    if (chatForOfflineCheck && chatForOfflineCheck.isOfflineMode) {
-        const plotRegex = /\[剧情:([\s\S]*?)\]/;
-        const plotMatch = message.content.match(plotRegex);
-
-        if (plotMatch) {
-            const wrapper = document.createElement('div');
-            wrapper.dataset.id = message.id;
-            // 这个气泡是全宽度的，不需要 sent/received 定位
-            wrapper.className = 'message-wrapper';
-
-            const plotContent = plotMatch[1]; // 这是正则表达式捕获的内容 ($1)
-
-            // 直接使用你提供的HTML和CSS
-            const offlineBubbleHTML = `
-                <!-- 开始：黑夜版剧情气泡代码 -->
-                <style>
-                    /*
-                    * 黑夜版 - 毛玻璃气泡样式
-                    */
-                    .plot-bubble-dark {
-                        /* 可以在这里调整基础字体大小 */
-                        font-size: 16px; 
-                        
-                        font-family: 'Noto Serif SC', serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-                        color: #f0f0f0; /* 主要文字颜色改为柔和的白色 */
-                        line-height: 1.8;
-                        padding: 1.5em 2em;
-                        
-                        /* 核心：黑色半透明毛玻璃效果 */
-                        background: rgba(0, 0, 0, 0.5); /* 半透明黑色背景 */
-                        -webkit-backdrop-filter: blur(12px);
-                        backdrop-filter: blur(12px);
-                        
-                        border-radius: 18px;
-                        border: 1px solid rgba(255, 255, 255, 0.2); /* 细微的亮色边框，增加质感 */
-                        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); /* 阴影加深以适应深色背景 */
-
-                        max-width: 90%; /* 调整最大宽度以适应手机屏幕 */
-                        margin: 1em auto;
-
-                        /* white-space: pre-wrap; 已被 <p> 标签替代，此处不需要 */
-                    }
-
-                    /*
-                    * 黑夜版 - 内心想法（em标签）的专属样式
-                    */
-                    .plot-bubble-dark em {
-                        font-size: 0.9em;
-                        font-weight: 300;
-                        font-style: italic;
-                        color: #b0b0b0; /* 内心想法的颜色改为稍暗的灰色，与主文本区分 */
-                    }
-                </style>
-                <div class="plot-bubble-dark">
-                    ${plotContent}
-                </div>
-                <!-- 结束：黑夜版剧情气泡代码 -->
-            `;
-
-            wrapper.innerHTML = offlineBubbleHTML;
-
-            // **关键**：返回这个特殊处理过的元素，并终止后续的常规气泡渲染
-            return wrapper;
+    if (plotMatch && characterForStyle) {
+        const isSent = (currentChatType === 'group') ? (message.senderId === 'user_me') : (message.role === 'user');
+        const wrapper = document.createElement('div');
+        wrapper.dataset.id = message.id;
+        wrapper.className = `message-wrapper ${isSent ? 'sent' : 'received'}`;
+        if (currentChatType === 'group' && !isSent) {
+            wrapper.classList.add('group-message');
         }
+
+        const bubbleRow = document.createElement('div');
+        bubbleRow.className = 'message-bubble-row';
+
+        let avatarUrl = isSent ? characterForStyle.myAvatar : characterForStyle.avatar;
+        const timeString = `${pad(new Date(message.timestamp).getHours())}:${pad(new Date(message.timestamp).getMinutes())}`;
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'message-info';
+        
+        const avatarContainer = document.createElement('div');
+        avatarContainer.className = 'avatar-container';
+        const frameUrl = isSent ? characterForStyle.myAvatarFrameUrl : characterForStyle.avatarFrameUrl;
+        avatarContainer.innerHTML = `<img src="${avatarUrl}" class="message-avatar">${frameUrl ? `<img src="${frameUrl}" class="avatar-frame">` : ''}`;
+        infoDiv.innerHTML = `<span class="message-time">${timeString}</span>`;
+        infoDiv.prepend(avatarContainer);
+        
+        const plotContent = plotMatch[1];
+        const settings = characterForStyle.offlineSettings || {};
+        
+        const bubbleElement = document.createElement('div');
+        bubbleElement.className = 'plot-bubble';
+        bubbleElement.innerHTML = plotContent;
+
+// --- 气泡样式自定义区域 ---
+
+// **字体大小** (由设置面板控制，此处无需修改)
+bubbleElement.style.fontSize = `${settings.fontSize || 16}px`;
+
+// **气泡圆角** (你可以修改 var(--border-radius) 为具体数值, 如 '18px')
+bubbleElement.style.borderRadius = 'var(--border-radius)';
+
+// **【修改这里】气泡最大宽度** (减小此值使气泡变窄)
+bubbleElement.style.maxWidth = '400px'; 
+
+// **【修改这里】气泡与头像的距离** (通过 margin-left 或 margin-right 控制)
+// 注意：sent 是你发送的，在右边；received 是对方发送的，在左边。
+if (isSent) {
+    bubbleElement.style.marginRight = '8px'; // 你发送的气泡距离右侧头像的间距
+} else {
+    bubbleElement.style.marginLeft = '12px'; // 对方发送的气泡距离左侧头像的间距
+}
+
+// **气泡最小高度** (如果需要，可以取消下面的注释并修改数值)
+// bubbleElement.style.minHeight = '50px';
+
+// (其他自动样式)
+bubbleElement.style.wordWrap = 'break-word';
+
+    // ▼▼▼ 在这里进行修改 ▼▼▼
+
+    // **[最终修复 V3.1] 使用 <style> 标签注入样式，以支持子元素选择器**
+    const preset = offlineBubblePresets[settings.preset || 'default_dark'];
+    let finalCss = '';
+
+    if (settings.useCustomCss && settings.customCss) {
+        // 如果用户启用了自定义CSS，则使用它
+        finalCss = settings.customCss;
+    } else if (preset) {
+        // 否则，使用选定的预设CSS
+        finalCss = preset.css;
     }
-    // ▲▲▲ 粘贴结束 ▲▲▲
+
+    if (finalCss) {
+        const styleEl = document.createElement('style');
+        // 关键：将CSS规则精确地指向这个唯一的气泡及其内部的 <em> 标签
+        // 移除了 .plot-bubble 自身的选择器，直接应用到父级，避免冲突
+        const scopedCss = finalCss
+            .replace(/\.plot-bubble\s*\{/g, `.message-wrapper[data-id="${message.id}"] .plot-bubble {`)
+            .replace(/\.plot-bubble\s+em\s*\{/g, `.message-wrapper[data-id="${message.id}"] .plot-bubble em {`);
+
+        styleEl.textContent = scopedCss;
+        wrapper.appendChild(styleEl);
+    }
+    
+    // ▲▲▲ 修改结束 ▲▲▲
+        
+        bubbleRow.appendChild(infoDiv);
+        bubbleRow.appendChild(bubbleElement);
+        wrapper.appendChild(bubbleRow);
+        
+        return wrapper;
+    }
+    
+    // --- 如果不是剧情气泡，则执行后面的常规渲染逻辑 ---
+    
+    // ▼▼▼ 在这里粘贴新的线下模式预设管理脚本 ▼▼▼
+(function(){
+  // 防止脚本被重复执行
+  if (window._offlineBubblePresetsScriptLoaded) return;
+  window._offlineBubblePresetsScriptLoaded = true;
+
+  const OFFLINE_PRES_KEY = 'offlineBubblePresets';
+
+  // --- 辅助函数 ---
+  function getOfflinePresets() {
+    try { return JSON.parse(localStorage.getItem(OFFLINE_PRES_KEY) || '[]'); }
+    catch(e){ return []; }
+  }
+  function saveOfflinePresets(arr) {
+    localStorage.setItem(OFFLINE_PRES_KEY, JSON.stringify(arr || []));
+  }
+
+  // --- 核心功能 ---
+  function populateOfflinePresetSelect() {
+    const sel = document.getElementById('offline-bubble-preset-select');
+    if (!sel) return;
+    
+    // 合并内置预设和用户自定义预设
+    const builtIn = Object.entries(offlineBubblePresets).map(([key, value]) => ({ name: value.name, css: value.css, isBuiltIn: true }));
+    const custom = getOfflinePresets();
+    const allPresets = [...builtIn, ...custom];
+
+    sel.innerHTML = ''; // 清空
+    allPresets.forEach((p) => {
+      const opt = document.createElement('option');
+      opt.value = p.name; // 使用名称作为唯一值
+      opt.textContent = p.name;
+      sel.appendChild(opt);
+    });
+  }
+
+  function applyOfflinePreset(presetName) {
+    const builtIn = Object.values(offlineBubblePresets);
+    const custom = getOfflinePresets();
+    const preset = [...builtIn, ...custom].find(p => p.name === presetName);
+    
+    if (!preset) {
+        showToast('未找到该预设');
+        return;
+    }
+
+    const textarea = document.getElementById('offline-custom-css');
+    if (textarea) {
+        textarea.value = preset.css.trim();
+    }
+    
+    // 自动勾选“启用自定义CSS”以预览效果
+    const useCustomCssCheckbox = document.getElementById('offline-use-custom-css');
+    if(useCustomCssCheckbox) {
+        useCustomCssCheckbox.checked = true;
+        // 手动触发change事件来显示textarea
+        useCustomCssCheckbox.dispatchEvent(new Event('change'));
+    }
+
+    showToast(`已应用预设“${presetName}”`);
+  }
+
+  function saveCurrentOfflineCssAsPreset() {
+    const textarea = document.getElementById('offline-custom-css');
+    if (!textarea) return showToast('找不到自定义CSS文本框');
+    
+    const css = textarea.value.trim();
+    if (!css) return showToast('当前CSS为空，无法保存');
+    
+    let name = prompt('请输入预设名称（将覆盖同名预设）：');
+    if (!name || !name.trim()) return;
+    name = name.trim();
+
+    // 检查是否与内置预设重名
+    if (Object.values(offlineBubblePresets).some(p => p.name === name)) {
+        return showToast('错误：不能使用与内置预设相同的名称。');
+    }
+
+    const presets = getOfflinePresets();
+    const existingIndex = presets.findIndex(p => p.name === name);
+
+    if (existingIndex > -1) {
+        presets[existingIndex].css = css;
+    } else {
+        presets.push({ name, css });
+    }
+    
+    saveOfflinePresets(presets);
+    populateOfflinePresetSelect(); // 刷新下拉列表
+    showToast('线下气泡预设已保存');
+  }
+
+  function openManageOfflinePresetsModal() {
+    const modal = document.getElementById('offline-presets-modal');
+    const list = document.getElementById('offline-presets-list');
+    if (!modal || !list) return;
+
+    list.innerHTML = '';
+    const presets = getOfflinePresets(); // 只管理用户自定义的
+    if (presets.length === 0) {
+        list.innerHTML = '<p style="color:#888;margin:6px 0;">暂无自定义预设</p>';
+    }
+
+    presets.forEach((p, idx) => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f0f0;';
+      
+      const nameDiv = document.createElement('div');
+      nameDiv.textContent = p.name;
+      row.appendChild(nameDiv);
+
+      const btnWrap = document.createElement('div');
+      btnWrap.style.cssText = 'display: flex; gap: 6px;';
+
+      const renameBtn = document.createElement('button');
+      renameBtn.className = 'btn btn-secondary btn-small';
+      renameBtn.textContent = '重命名';
+      renameBtn.onclick = function(){
+          const newName = prompt('输入新名称：', p.name);
+          if (newName && newName.trim()) {
+              const all = getOfflinePresets();
+              all[idx].name = newName.trim();
+              saveOfflinePresets(all);
+              openManageOfflinePresetsModal();
+              populateOfflinePresetSelect();
+          }
+      };
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn btn-danger btn-small';
+      delBtn.textContent = '删除';
+      delBtn.onclick = function(){
+          if (!confirm(`确定删除预设 "${p.name}" ?`)) return;
+          const all = getOfflinePresets();
+          all.splice(idx, 1);
+          saveOfflinePresets(all);
+          openManageOfflinePresetsModal();
+          populateOfflinePresetSelect();
+      };
+
+      btnWrap.appendChild(renameBtn);
+      btnWrap.appendChild(delBtn);
+      row.appendChild(btnWrap);
+      list.appendChild(row);
+    });
+    modal.style.display = 'flex';
+  }
+
+  // --- 绑定UI事件 ---
+  function bindOfflinePresetUI() {
+      // 填充下拉菜单
+      populateOfflinePresetSelect();
+      
+      const sel = document.getElementById('offline-bubble-preset-select');
+      const saveBtn = document.getElementById('offline-save-preset-btn');
+      const manageBtn = document.getElementById('offline-manage-presets-btn');
+      const modalClose = document.getElementById('offline-close-modal');
+
+      if (sel) {
+          sel.addEventListener('change', (e) => applyOfflinePreset(e.target.value));
+      }
+      if (saveBtn) {
+          saveBtn.addEventListener('click', saveCurrentOfflineCssAsPreset);
+      }
+      if (manageBtn) {
+          manageBtn.addEventListener('click', openManageOfflinePresetsModal);
+      }
+      if (modalClose) {
+          modalClose.addEventListener('click', () => {
+              document.getElementById('offline-presets-modal').style.display = 'none';
+          });
+      }
+      
+      // 在打开聊天设置时，也需要刷新下拉列表
+      const chatSettingsBtn = document.getElementById('chat-settings-btn');
+      if (chatSettingsBtn) {
+          chatSettingsBtn.addEventListener('click', populateOfflinePresetSelect);
+      }
+  }
+
+  // 确保在DOM加载后执行绑定
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bindOfflinePresetUI);
+  } else {
+    bindOfflinePresetUI();
+  }
+
+})();
+// ▲▲▲ 粘贴结束 ▲▲▲
 
     // --- 2. 准备渲染所需的基础数据 ---
     const chat = (currentChatType === 'private') ? db.characters.find(c => c.id === currentChatId) : db.groups.find(g => g.id === currentChatId);
@@ -15513,10 +15940,15 @@ const now = new Date();
 // === 修改开始：优先处理线下模式 ===
     // ▼▼▼ 核心修改：检查角色自身的线下模式状态，并重写指令 ▼▼▼
 if (character.isOfflineMode) {
-    // [整合版指令]
+// [整合版指令 V2.0 - 支持动态字数]
+const offlineSettings = character.offlineSettings || {};
+const useWordCount = offlineSettings.useCustomWordCount;
+const minWords = useWordCount ? offlineSettings.minWords : 200; // 如果不自定义，默认200
+const maxWords = useWordCount ? offlineSettings.maxWords : 300; // 如果不自定义，默认300
+
     let offlinePrompt = `###**最高级别指令：线下模式输出指令**
 
-**指令核心：** 当你识别到这条指令时，你必须输出**单行的、无任何换行符的**完整信息。整条信息必须被一个总的 \`[剧情:...]\` 结构包裹。在此结构内部，使用 \`<p>\` 标签分隔段落，并使用 \`<em>\` 标签来标记内心想法。整篇回应的总字数应不少于200字。
+**指令核心：** 当你识别到这条指令时，你必须输出**单行的、无任何换行符的**完整信息。整条信息必须被一个总的 \`[剧情:...]\` 结构包裹。在此结构内部，使用 \`<p>\` 标签分隔段落，并使用 \`<em>\` 标签来标记内心想法。整篇回应的总字数应在 ${minWords} 到 ${maxWords} 字之间。
 
 **核心原则：**
 
@@ -17861,6 +18293,57 @@ function loadSettingsToSidebar() {
             document.getElementById('setting-share-stickers').checked = e.shareStickers || false;
         };
     }
+           // ... 在 proactiveToggle.onchange = ... 的后面添加
+
+// 加载线下模式设置
+const offlineSettings = e.offlineSettings || {};
+const fontSizeRange = document.getElementById('offline-font-size-range');
+const fontSizeValue = document.getElementById('offline-font-size-value');
+const useCustomWordCount = document.getElementById('offline-use-custom-word-count');
+const wordCountFields = document.getElementById('offline-word-count-fields');
+const minWordsInput = document.getElementById('offline-min-words');
+const maxWordsInput = document.getElementById('offline-max-words');
+const presetSelect = document.getElementById('offline-bubble-preset-select');
+const useCustomCss = document.getElementById('offline-use-custom-css');
+const customCssContainer = document.getElementById('offline-custom-css-container');
+const customCssTextarea = document.getElementById('offline-custom-css');
+
+fontSizeRange.value = offlineSettings.fontSize || 16;
+fontSizeValue.textContent = `${fontSizeRange.value}px`;
+useCustomWordCount.checked = offlineSettings.useCustomWordCount || false;
+wordCountFields.style.display = useCustomWordCount.checked ? 'block' : 'none';
+minWordsInput.value = offlineSettings.minWords || 300;
+maxWordsInput.value = offlineSettings.maxWords || 500;
+
+// ▼▼▼ 替换这里的代码 ▼▼▼
+// 重新填充下拉列表（现在由预设系统接管）
+const builtIn = Object.entries(offlineBubblePresets).map(([key, value]) => ({ name: value.name, css: value.css, isBuiltIn: true }));
+const custom = JSON.parse(localStorage.getItem('offlineBubblePresets') || '[]');
+const allPresets = [...builtIn, ...custom];
+
+presetSelect.innerHTML = '';
+allPresets.forEach((p) => {
+  const opt = document.createElement('option');
+  opt.value = p.name;
+  opt.textContent = p.name;
+  presetSelect.appendChild(opt);
+});
+
+// 找到与保存的名称匹配的预设
+const savedPreset = allPresets.find(p => p.name === (offlineSettings.preset || '默认 · 暗夜玻璃'));
+presetSelect.value = savedPreset ? savedPreset.name : '默认 · 暗夜玻璃';
+// ▲▲▲ 替换结束 ▲▲▲
+
+useCustomCss.checked = offlineSettings.useCustomCss || false;
+customCssContainer.style.display = useCustomCss.checked ? 'block' : 'none';
+customCssTextarea.value = offlineSettings.customCss || '';
+
+// 绑定事件
+fontSizeRange.oninput = () => { fontSizeValue.textContent = `${fontSizeRange.value}px`; };
+useCustomWordCount.onchange = () => { wordCountFields.style.display = useCustomWordCount.checked ? 'block' : 'none'; };
+useCustomCss.onchange = () => { customCssContainer.style.display = useCustomCss.checked ? 'block' : 'none'; };
+
+// ... 函数的结束括号 }
 }
 
    function openGroupMemberEditModal(memberId) {
@@ -17895,7 +18378,22 @@ function loadSettingsToSidebar() {
         e.aiProactiveChatEnabled = document.getElementById('private-ai-proactive-chat-toggle').checked;
         e.aiProactiveChatDelay = parseInt(document.getElementById('private-ai-proactive-chat-delay').value, 10) || 0;
         e.aiProactiveChatInterval = parseInt(document.getElementById('private-ai-proactive-chat-interval').value, 10) || 0;
+// ... 在 e.aiProactiveChatInterval = ... 的后面添加
 
+// 保存线下模式设置
+e.offlineSettings = e.offlineSettings || {};
+e.offlineSettings.fontSize = document.getElementById('offline-font-size-range').value;
+e.offlineSettings.useCustomWordCount = document.getElementById('offline-use-custom-word-count').checked;
+e.offlineSettings.minWords = document.getElementById('offline-min-words').value;
+e.offlineSettings.maxWords = document.getElementById('offline-max-words').value;
+// ▼▼▼ 修改这一行 ▼▼▼
+const presetSelect = document.getElementById('offline-bubble-preset-select');
+e.offlineSettings.preset = presetSelect.options[presetSelect.selectedIndex].text;
+// ▲▲▲ 修改结束 ▲▲▲
+e.offlineSettings.useCustomCss = document.getElementById('offline-use-custom-css').checked;
+e.offlineSettings.customCss = document.getElementById('offline-custom-css').value;
+
+// ... 后面是 await saveData();
         await saveData();
         showToast('设置已保存！');
         chatRoomTitle.textContent = e.remarkName;
@@ -25600,73 +26098,66 @@ function cancelQuoteReply() {
     (window.showToast && showToast('预设已保存')) || alert('预设已保存');
   }
 
+  // ▼▼▼ 用这个新函数，完整替换旧的 openManagePresetsModal 函数 ▼▼▼
   function openManagePresetsModal() {
     const modal = document.getElementById('bubble-presets-modal');
     const list = document.getElementById('bubble-presets-list');
     if (!modal || !list) return;
-    list.innerHTML = '';
+
+    list.innerHTML = ''; // 清空旧列表
     const presets = _getBubblePresets();
-    if (!presets.length) list.innerHTML = '<p style="color:#888;margin:6px 0;">暂无预设</p>';
+
+    if (presets.length === 0) {
+        list.innerHTML = '<p style="color:#888;margin:6px 0;">暂无自定义预设</p>';
+    }
+
     presets.forEach((p, idx) => {
-      const row = document.createElement('div');
-      row.style.display = 'flex';
-      row.style.justifyContent = 'space-between';
-      row.style.alignItems = 'center';
-      row.style.padding = '8px 0';
-      row.style.borderBottom = '1px solid #f0f0f0';
-      const nameDiv = document.createElement('div');
-      nameDiv.style.flex = '1';
-      nameDiv.style.whiteSpace = 'nowrap';
-      nameDiv.style.overflow = 'hidden';
-      nameDiv.style.textOverflow = 'ellipsis';
-      nameDiv.textContent = p.name;
-      row.appendChild(nameDiv);
+        const row = document.createElement('div');
+        // 复用线下模式弹窗的样式
+        row.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f0f0;';
+        
+        const nameDiv = document.createElement('div');
+        nameDiv.textContent = p.name;
+        row.appendChild(nameDiv);
 
-      const btnWrap = document.createElement('div');
-      btnWrap.style.display = 'flex';
-      btnWrap.style.gap = '6px';
+        const btnWrap = document.createElement('div');
+        btnWrap.style.cssText = 'display: flex; gap: 6px;';
 
-      const applyBtn = document.createElement('button');
-      applyBtn.className = 'btn btn-primary';
-      applyBtn.style.padding = '6px 8px;border-radius:8px';
-      applyBtn.textContent = '应用';
-      applyBtn.onclick = function(){ applyPresetToCurrentChat(p.name); modal.style.display = 'none'; };
+        const renameBtn = document.createElement('button');
+        renameBtn.className = 'btn btn-secondary btn-small'; // 使用标准按钮样式
+        renameBtn.textContent = '重命名';
+        renameBtn.onclick = function(){
+            const newName = prompt('输入新名称：', p.name);
+            if (newName && newName.trim()) {
+                const all = _getBubblePresets();
+                all[idx].name = newName.trim();
+                _saveBubblePresets(all);
+                openManagePresetsModal(); // 刷新列表
+                populateBubblePresetSelect(); // 刷新下拉菜单
+            }
+        };
 
-      const renameBtn = document.createElement('button');
-      renameBtn.className = 'btn';
-      renameBtn.style.padding = '6px 8px;border-radius:8px';
-      renameBtn.textContent = '重命名';
-      renameBtn.onclick = function(){
-        const newName = prompt('输入新名称：', p.name);
-        if (!newName) return;
-        const presetsAll = _getBubblePresets();
-        presetsAll[idx].name = newName;
-        _saveBubblePresets(presetsAll);
-        openManagePresetsModal(); // refresh
-        populateBubblePresetSelect();
-      };
+        const delBtn = document.createElement('button');
+        delBtn.className = 'btn btn-danger btn-small'; // 使用标准按钮样式
+        delBtn.textContent = '删除';
+        delBtn.onclick = function(){
+            if (!confirm(`确定删除预设 "${p.name}" ?`)) return;
+            const all = _getBubblePresets();
+            all.splice(idx, 1);
+            _saveBubblePresets(all);
+            openManagePresetsModal();
+            populateBubblePresetSelect();
+        };
 
-      const delBtn = document.createElement('button');
-      delBtn.className = 'btn btn-danger';
-      delBtn.style.padding = '6px 8px;border-radius:8px';
-      delBtn.textContent = '删除';
-      delBtn.onclick = function(){
-        if (!confirm('确定删除预设 \"' + p.name + '\" ?')) return;
-        const presetsAll = _getBubblePresets();
-        presetsAll.splice(idx, 1);
-        _saveBubblePresets(presetsAll);
-        openManagePresetsModal();
-        populateBubblePresetSelect();
-      };
-
-      btnWrap.appendChild(applyBtn);
-      btnWrap.appendChild(renameBtn);
-      btnWrap.appendChild(delBtn);
-      row.appendChild(btnWrap);
-      list.appendChild(row);
+        // **注意**：线上模式的管理弹窗不需要“应用”按钮，因为应用功能在主设置界面
+        btnWrap.appendChild(renameBtn);
+        btnWrap.appendChild(delBtn);
+        row.appendChild(btnWrap);
+        list.appendChild(row);
     });
     modal.style.display = 'flex';
   }
+// ▲▲▲ 替换结束 ▲▲▲
 
   function bindBubblePresetUI() {
     populateBubblePresetSelect();
@@ -32065,6 +32556,42 @@ fileInput.addEventListener('change', async (e)=>{
     </div>
 </div>
   
+  <!-- ▼▼▼ 在 </body> 前粘贴新的弹窗HTML ▼▼▼ -->
+<div id="offline-presets-modal" class="modal-overlay" style="display:none; z-index: 106;">
+    <div class="modal-window" style="max-width:520px;">
+        <h3 style="margin:0 0 10px 0;">管理线下气泡预设</h3>
+        <div id="offline-presets-list" style="max-height:340px; overflow:auto; margin-bottom:12px;"></div>
+        <div style="display:flex; gap:8px; justify-content:flex-end;">
+            <button id="offline-close-modal" class="btn btn-primary" style="padding:8px 12px;">关闭</button>
+        </div>
+    </div>
+</div>
+<!-- ▲▲▲ 粘贴结束 ▲▲▲ -->
+<!-- ▼▼▼ 在这里粘贴新的更新弹窗HTML ▼▼▼ -->
+<div id="update-modal" class="modal-overlay">
+    <div class="modal-window" style="max-width: 400px;">
+        <h3>版本更新说明 ✨</h3>
+        
+        <!-- 更新日志内容区域 -->
+        <div id="update-content" style="max-height: 40vh; overflow-y: auto; background-color: #f9f9f9; padding: 10px 15px; border-radius: 8px; margin-bottom: 20px;">
+            <ul>
+                <li><strong>新增</strong>：聊天设置界面现已支持折叠分类，界面更清爽！</li>
+                <li><strong>新增</strong>：更新了线下模式，现在可以roll出来啦！线下模式有专属的气泡哦。</li>
+            </ul>
+        </div>
+        
+        <!-- “不再提示”选项 -->
+        <div class="form-group" style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 20px;">
+            <input type="checkbox" id="dont-show-again" style="width: auto; height: 18px;">
+            <label for="dont-show-again" style="margin-bottom: 0; color: #888; font-weight: normal;">本次更新不再弹出</label>
+        </div>
+        
+        <!-- 关闭按钮 -->
+        <button id="close-update-modal" class="btn btn-primary">朕知道了</button>
+    </div>
+</div>
+<!-- ▲▲▲ 粘贴结束 ▲▲▲ -->  
+  
       <!-- ▼▼▼ 在这里粘贴新的代码 ▼▼▼ -->
     <script>
       if ('serviceWorker' in navigator) {
@@ -32140,6 +32667,62 @@ fileInput.addEventListener('change', async (e)=>{
       }
     }, true);
   });
+  
+  // ▼▼▼ 在 <script> 标签末尾添加 ▼▼▼
+(function() {
+    // 确保在DOM加载完毕后执行
+    document.addEventListener('DOMContentLoaded', () => {
+
+        // ==========================================================
+        // == 核心配置：每次更新时，修改这里的版本号即可让弹窗重新出现 ==
+        // ==========================================================
+        const UPDATE_VERSION = '1.0.1'; // 例如：1.0.1, 1.0.2, 'new_feature_update'
+        
+        const STORAGE_KEY = `updatePopupDismissed_v${UPDATE_VERSION}`;
+
+        // 获取弹窗相关的DOM元素
+        const modal = document.getElementById('update-modal');
+        const closeBtn = document.getElementById('close-update-modal');
+        const checkbox = document.getElementById('dont-show-again');
+
+        // 安全检查，如果找不到弹窗元素则不执行后续代码
+        if (!modal || !closeBtn || !checkbox) {
+            return;
+        }
+
+        // 检查用户是否已经针对“这个版本”选择了“不再弹出”
+        const isDismissed = localStorage.getItem(STORAGE_KEY);
+
+        // 如果没有记录，则显示弹窗
+        if (!isDismissed) {
+            // 使用一个小的延迟，避免页面刚加载就立刻弹出，体验更好
+            setTimeout(() => {
+                modal.classList.add('visible');
+            }, 500);
+        }
+
+        // 定义关闭弹窗的函数
+        const closeUpdateModal = () => {
+            // 如果用户勾选了“不再弹出”
+            if (checkbox.checked) {
+                // 在 localStorage 中记录下来，键名包含版本号
+                localStorage.setItem(STORAGE_KEY, 'true');
+            }
+            // 隐藏弹窗
+            modal.classList.remove('visible');
+        };
+
+        // 为关闭按钮和弹窗背景绑定点击事件
+        closeBtn.addEventListener('click', closeUpdateModal);
+        modal.addEventListener('click', (e) => {
+            // 如果点击的是灰色背景区域，也关闭弹窗
+            if (e.target === modal) {
+                closeUpdateModal();
+            }
+        });
+    });
+})();
+// ▲▲▲ 添加结束 ▲▲▲
 </script>
 </body>
 
