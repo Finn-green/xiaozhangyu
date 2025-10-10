@@ -14119,7 +14119,6 @@ menuItems.push({
 
     if (currentChatType === 'private') {
         const character = db.characters.find(c => c.id === currentChatId);
-        if (character && character.isOfflineMode) {
             menuItems.push({
                 label: '修改状态',
                 action: async () => {
@@ -14137,7 +14136,6 @@ menuItems.push({
                     }
                 }
             });
-        }
     }
     // --- 新增结束 ---    
     menuItems.push({label: '删除', action: () => enterMultiSelectMode(messageId)});
