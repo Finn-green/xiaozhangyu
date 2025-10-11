@@ -3410,6 +3410,39 @@ html, body {
 
 /* ▲▲▲ 添加结束 ▲▲▲ */
 
+/* ▼▼▼ 在 <style> 标签末尾添加 ▼▼▼ */
+
+/* --- 新增：聊天设置弹窗样式与滚动优化 --- */
+#chat-settings-modal .modal-window {
+    /* 让弹窗更高，以容纳更多内容 */
+    height: 85vh;
+    max-height: 750px;
+    /* 改为flex布局，以便控制内部滚动 */
+    display: flex;
+    flex-direction: column;
+}
+
+#chat-settings-modal .modal-window .content {
+    /* 关键：让内容区可独立滚动 */
+    flex-grow: 1;
+    overflow-y: auto;
+    min-height: 0; /* flex布局技巧，防止内容撑破 */
+}
+
+/* ▲▲▲ 添加结束 ▲▲▲ */
+/* ▼▼▼ 在 <style> 标签末尾添加 ▼▼▼ */
+
+/* --- 修复：设置弹窗中头像尺寸过大的问题 --- */
+#chat-settings-modal .avatar-preview {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--primary-color);
+    cursor: pointer;
+}
+
+/* ▲▲▲ 添加结束 ▲▲▲ */
     </style>
     <!-- === moments 固定在 phone-screen 内的修复样式 (自动插入补丁) === -->
 <style>
@@ -4419,6 +4452,8 @@ html, body {
     height: auto;
     min-height: 0;
     padding-bottom: 80px; /* 为底部导航栏预留空间 */
+    -webkit-overflow-scrolling: touch; /* 新增：启用iOS下的流畅滚动 */
+}
 }
 /* --- AI轨迹/心声按钮激活样式 --- */
 #ai-trajectory-btn.active-heart-sound svg {
@@ -6030,199 +6065,203 @@ html, body {
             <button class="action-sheet-button danger" id="return-transfer-btn">退回</button>
         </div>
     </div>
-    <!-- Private Chat Settings -->
-<!-- ▼▼▼ 用这个全新的、完整的侧边栏代码替换旧的 ▼▼▼ -->
-<div id="chat-settings-sidebar" class="settings-sidebar">
-    <div class="header">聊天设置</div>
-    <div class="content">
-        <form id="chat-settings-form">
-
-            <!-- 类别一：角色核心设定 -->
-            <details class="settings-category">
-                <summary>角色核心设定</summary>
-                <div class="settings-content-wrapper">
-                    <div class="avatar-setting">
-                        <div class="avatar-container-setting" id="char-avatar-container-setting">
-                            <img src="" alt="角色头像" id="setting-char-avatar-preview" class="avatar-preview">
-                        </div>
-                        <button type="button" class="btn btn-small btn-primary avatar-frame-btn" data-target="private-ai">🌟</button>
-                        <input type="file" id="setting-char-avatar-upload" accept="image/*" style="display:none;">
-                        <label for="setting-char-avatar-upload" class="btn btn-primary" style="flex-grow:1;">更换角色头像</label>
-                    </div>
-                    <div class="form-group">
-                        <label for="setting-char-remark">角色备注 (昵称)</label>
-                        <input type="text" id="setting-char-remark">
-                    </div>
-                    <div class="form-group">
-                        <label for="setting-char-persona">角色人设</label>
-                        <textarea id="setting-char-persona" placeholder="详细描述角色的性格、背景、说话风格等。"></textarea>
-                    </div>
-                </div>
-            </details>
-
-            <!-- 类别二：我的设定 -->
-            <details class="settings-category">
-                <summary>我的设定</summary>
-                <div class="settings-content-wrapper">
-                    <div class="avatar-setting">
-                        <div class="avatar-container-setting" id="my-avatar-container-setting">
-                            <img src="" alt="我的头像" id="setting-my-avatar-preview" class="avatar-preview">
-                        </div>
-                        <button type="button" class="btn btn-small btn-secondary avatar-frame-btn" data-target="private-user">🌟</button>
-                        <input type="file" id="setting-my-avatar-upload" accept="image/*" style="display:none;">
-                        <label for="setting-my-avatar-upload" class="btn btn-secondary" style="flex-grow:1;">更换我的头像</label>
-                    </div>
-                    <div class="form-group">
-                        <label for="setting-my-name">我的姓名</label>
-                        <input type="text" id="setting-my-name">
-                    </div>
-                    <div class="form-group">
-                        <label for="setting-my-persona">我的人设</label>
-                        <textarea id="setting-my-persona" placeholder="描述你希望在对话中扮演的形象。"></textarea>
-                    </div>
-                </div>
-            </details>
-
-            <!-- 类别三：对话与记忆 -->
-            <details class="settings-category">
-                <summary>对话与记忆</summary>
-                <div class="settings-content-wrapper">
-                    <div class="form-group">
-                        <button type="button" class="btn btn-secondary" id="link-world-book-btn">关联世界书</button>
-                    </div>
-                    <div class="form-group">
-                        <label for="setting-max-memory">最大记忆轮数</label>
-                        <input type="number" id="setting-max-memory" value="10" min="1">
-                    </div>
-                    <div class="form-group">
-                        <button type="button" class="btn btn-secondary" id="show-memory-summary-btn">查看回忆记录</button>
-                    </div>
-                </div>
-            </details>
-
-            <!-- 类别四：外观与样式 -->
-            <details class="settings-category">
-                <summary>外观与样式</summary>
-                <div class="settings-content-wrapper">
-                    <div class="form-group">
-                        <label for="setting-theme-color">主题颜色 (对方/我方)</label>
-                        <select id="setting-theme-color"></select>
-                    </div>
-                    <div class="form-group">
-                        <label for="setting-chat-bg-upload" class="btn btn-primary">更换聊天背景</label>
-                        <input type="file" id="setting-chat-bg-upload" accept="image/*" style="display:none;">
-                    </div>
-                    <div class="form-group">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                            <label for="setting-use-custom-css" style="margin-bottom:0;">自定义气泡样式</label>
-                            <input type="checkbox" id="setting-use-custom-css" style="width: auto;">
-                        </div>
-                        <div id="private-bubble-css-preview" class="bubble-css-preview" style="background: #fff; border: 1px solid #eee; border-radius: 10px; padding: 15px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px;"></div>
-                        <textarea id="setting-custom-bubble-css" rows="6" placeholder="在此输入CSS代码...&#10;例如：&#10;.message-bubble.sent { background-color: #A5D6A7; }&#10;.message-bubble.received { background-color: #E1E1E1; }" disabled></textarea>
-                        <div class="panel panel-sm" style="padding:12px;border-radius:10px;border:1px solid var(--border-color,#e8e8ef);background:var(--panel-bg,#fff);box-shadow:var(--panel-shadow,0 4px 12px rgba(20,20,30,0.04));margin:10px 0;">
-                            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-                                <label for="bubble-preset-select" style="width:88px;color:var(--muted,#667);font-size:13px;">气泡预设</label>
-                                <select id="bubble-preset-select" style="flex:1;padding:8px 10px;border-radius:8px;border:1px solid var(--input-border,#e6e6ea);background:var(--input-bg,#fff);font-size:14px;">
-                                    <option value="">— 选择预设 —</option>
-                                </select>
-                                <button type="button" id="apply-preset-btn" class="btn btn-primary" style="margin-left:8px;padding:7px 10px;border-radius:8px;">应用</button>
+<!-- ▼▼▼ 在 </body> 标签前粘贴 ▼▼▼ -->
+<!-- 全新的聊天设置弹窗 -->
+<div id="chat-settings-modal" class="modal-overlay">
+    <div class="modal-window">
+        <h3 style="text-align: center; color: var(--primary-color); margin-top: 0;">聊天设置</h3>
+        
+        <!-- 可滚动的内容区域 -->
+        <div class="content" style="padding: 0 15px 15px;">
+            <!-- 这里是原侧边栏的所有设置项 -->
+            <form id="chat-settings-form">
+                <!-- 类别一：角色核心设定 -->
+                <details class="settings-category" open>
+                    <summary>角色核心设定</summary>
+                    <div class="settings-content-wrapper">
+                        <div class="avatar-setting">
+                            <div class="avatar-container-setting" id="char-avatar-container-setting">
+                                <img src="" alt="角色头像" id="setting-char-avatar-preview" class="avatar-preview">
                             </div>
-                            <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
-                                <label style="width:88px;color:var(--muted,#667);font-size:13px;">外观操作</label>
-                                <button type="button" id="save-preset-btn" class="btn" style="padding:7px 10px;border-radius:8px;">另存为预设</button>
-                                <button type="button" id="manage-presets-btn" class="btn" style="padding:7px 10px;border-radius:8px;">管理</button>
-                            </div>
-                        </div>
-                        <button type="button" class="btn btn-neutral" id="reset-custom-bubble-css-btn" style="margin-top: 10px; width: auto; padding: 5px 15px; font-size: 14px;">恢复默认</button>
-                    </div>
-                </div>
-            </details>
-
-            <!-- 类别五：线下模式专属设置 -->
-            <details class="settings-category">
-                <summary>线下模式专属设置</summary>
-                <div class="form-group" style="display: flex; align-items: center; justify-content: space-between;">
-                        <label for="setting-offline-mode" style="margin-bottom: 0;">开启线下模式 (仅此角色)</label>
-                        <input type="checkbox" id="setting-offline-mode" style="width: auto; height: 20px;">
-                    </div>
-                <div class="settings-content-wrapper">
-                    <div class="form-group">
-                        <label for="offline-font-size-range">剧情字号</label>
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <input id="offline-font-size-range" type="range" min="12" max="24" step="1" style="flex:1;">
-                            <span id="offline-font-size-value" style="width:56px; text-align:right;">16px</span>
-                        </div>
-                    </div>
-                    <div class="form-group" style="display: flex; align-items: center; justify-content: space-between;">
-                        <label for="offline-use-custom-word-count" style="margin-bottom: 0;">自定义字数范围</label>
-                        <input type="checkbox" id="offline-use-custom-word-count" style="width: auto; height: 20px;">
-                    </div>
-                    <div id="offline-word-count-fields" style="display: none; border-left: 3px solid #fce4ec; padding-left: 15px; margin-top: -10px; margin-bottom: 20px;">
-                        <div class="form-group">
-                            <label for="offline-min-words">最少字数</label>
-                            <input type="number" id="offline-min-words" min="50" value="300">
+                            <button type="button" class="btn btn-small btn-primary avatar-frame-btn" data-target="private-ai">🌟</button>
+                            <input type="file" id="setting-char-avatar-upload" accept="image/*" style="display:none;">
+                            <label for="setting-char-avatar-upload" class="btn btn-primary" style="flex-grow:1;">更换角色头像</label>
                         </div>
                         <div class="form-group">
-                            <label for="offline-max-words">最多字数</label>
-                            <input type="number" id="offline-max-words" min="100" value="500">
+                            <label for="setting-char-remark">角色备注 (昵称)</label>
+                            <input type="text" id="setting-char-remark">
+                        </div>
+                        <div class="form-group">
+                            <label for="setting-char-persona">角色人设</label>
+                            <textarea id="setting-char-persona" placeholder="详细描述角色的性格、背景、说话风格等。"></textarea>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label for="offline-bubble-preset-select">气泡预设</label>
-                        <select id="offline-bubble-preset-select"></select>
-                    </div>
-                    <div class="form-group" style="display: flex; align-items: center; justify-content: space-between;">
-                        <label for="offline-use-custom-css" style="margin-bottom: 0;">启用线下模式的气泡</label>
-                        <input type="checkbox" id="offline-use-custom-css" style="width: auto; height: 20px;">
-                    </div>
-                    <div class="form-group" id="offline-custom-css-container" style="display: none;">
-                        <textarea id="offline-custom-css" rows="6" placeholder="/* 示例： */\n.plot-bubble {\n  background: #333;\n  color: #fff;\n}"></textarea>
-                    </div>
-                    <div id="offline-presets-control" style="margin-top: 10px; padding: 12px; border-radius: 10px; border: 1px solid #fce4ec; background: #fff8fa;">
-                        <div style="display:flex; gap:8px; justify-content:flex-end;">
-                            <button type="button" id="offline-save-preset-btn" class="btn btn-secondary btn-small">另存为预设</button>
-                            <button type="button" id="offline-manage-presets-btn" class="btn btn-neutral btn-small">管理预设</button>
-                        </div>
-                    </div>
-                </div>
-            </details>
+                </details>
 
-            <!-- 类别六：高级功能 -->
-            <details class="settings-category">
-                <summary>高级功能</summary>
-                <div class="settings-content-wrapper">
-                    <div class="form-group">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                            <label for="private-ai-proactive-chat-toggle" style="margin-bottom:0;">开启AI后台回复</label>
-                            <input type="checkbox" id="private-ai-proactive-chat-toggle" style="width: auto;">
+                <!-- 类别二：我的设定 -->
+                <details class="settings-category">
+                    <summary>我的设定</summary>
+                    <div class="settings-content-wrapper">
+                        <div class="avatar-setting">
+                            <div class="avatar-container-setting" id="my-avatar-container-setting">
+                                <img src="" alt="我的头像" id="setting-my-avatar-preview" class="avatar-preview">
+                            </div>
+                            <button type="button" class="btn btn-small btn-secondary avatar-frame-btn" data-target="private-user">🌟</button>
+                            <input type="file" id="setting-my-avatar-upload" accept="image/*" style="display:none;">
+                            <label for="setting-my-avatar-upload" class="btn btn-secondary" style="flex-grow:1;">更换我的头像</label>
                         </div>
-                        <div id="private-ai-proactive-options" style="display: none;">
-                            <label for="private-ai-proactive-chat-delay">无回复超过 (分钟)</label>
-                            <input type="number" id="private-ai-proactive-chat-delay" min="1" placeholder="例如：30">
-                            <label for="private-ai-proactive-chat-interval" style="margin-top: 10px;">AI后台回复间隔时间 (分钟)</label>
-                            <input type="number" id="private-ai-proactive-chat-interval" min="1" placeholder="例如：60">
+                        <div class="form-group">
+                            <label for="setting-my-name">我的姓名</label>
+                            <input type="text" id="setting-my-name">
+                        </div>
+                        <div class="form-group">
+                            <label for="setting-my-persona">我的人设</label>
+                            <textarea id="setting-my-persona" placeholder="描述你希望在对话中扮演的形象。"></textarea>
                         </div>
                     </div>
-                    <div class="form-group" style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #eee; padding-top: 20px;">
-                        <label for="setting-share-stickers" style="margin-bottom: 0;">共享表情包</label>
-                        <input type="checkbox" id="setting-share-stickers" style="width: auto; height: 20px;">
-                    </div>
-                    <div class="form-group" style="margin-top: 20px;">
-                        <button type="button" class="btn btn-secondary" id="search-history-btn">搜索聊天记录</button>
-                    </div>
-                </div>
-            </details>
+                </details>
 
-            <button type="submit" class="btn btn-primary" style="margin-top: 20px;">保存设置</button>
-        </form>
+                <!-- 类别三：对话与记忆 -->
+                <details class="settings-category">
+                    <summary>对话与记忆</summary>
+                    <div class="settings-content-wrapper">
+                        <div class="form-group">
+                            <button type="button" class="btn btn-secondary" id="link-world-book-btn">关联世界书</button>
+                        </div>
+                        <div class="form-group">
+                            <label for="setting-max-memory">最大记忆轮数</label>
+                            <input type="number" id="setting-max-memory" value="10" min="1">
+                        </div>
+                        <div class="form-group">
+                            <button type="button" class="btn btn-secondary" id="show-memory-summary-btn">查看回忆记录</button>
+                        </div>
+                    </div>
+                </details>
 
-        <hr style="border:none; border-top:1px solid #eee; margin: 20px 0;">
-        <button type="button" class="btn btn-danger" id="block-user-btn">拉黑</button>
-        <hr style="border:none; border-top:1px solid #eee; margin: 20px 0;">
-        <button type="button" class="btn btn-danger" id="clear-chat-history-btn">清空聊天记录</button>
+                <!-- 类别四：外观与样式 -->
+                <details class="settings-category">
+                    <summary>外观与样式</summary>
+                    <div class="settings-content-wrapper">
+                        <div class="form-group">
+                            <label for="setting-theme-color">主题颜色 (对方/我方)</label>
+                            <select id="setting-theme-color"></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="setting-chat-bg-upload" class="btn btn-primary">更换聊天背景</label>
+                            <input type="file" id="setting-chat-bg-upload" accept="image/*" style="display:none;">
+                        </div>
+                        <div class="form-group">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <label for="setting-use-custom-css" style="margin-bottom:0;">自定义气泡样式</label>
+                                <input type="checkbox" id="setting-use-custom-css" style="width: auto;">
+                            </div>
+                            <div id="private-bubble-css-preview" class="bubble-css-preview" style="background: #fff; border: 1px solid #eee; border-radius: 10px; padding: 15px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px;"></div>
+                            <textarea id="setting-custom-bubble-css" rows="6" placeholder="在此输入CSS代码..." disabled></textarea>
+                            <div class="panel panel-sm" style="padding:12px;border-radius:10px;border:1px solid var(--border-color,#e8e8ef);background:var(--panel-bg,#fff);box-shadow:var(--panel-shadow,0 4px 12px rgba(20,20,30,0.04));margin:10px 0;">
+                                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                                    <label for="bubble-preset-select" style="width:88px;color:var(--muted,#667);font-size:13px;">气泡预设</label>
+                                    <select id="bubble-preset-select" style="flex:1;padding:8px 10px;border-radius:8px;border:1px solid var(--input-border,#e6e6ea);background:var(--input-bg,#fff);font-size:14px;">
+                                        <option value="">— 选择预设 —</option>
+                                    </select>
+                                    <button type="button" id="apply-preset-btn" class="btn btn-primary" style="margin-left:8px;padding:7px 10px;border-radius:8px;">应用</button>
+                                </div>
+                                <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+                                    <label style="width:88px;color:var(--muted,#667);font-size:13px;">外观操作</label>
+                                    <button type="button" id="save-preset-btn" class="btn" style="padding:7px 10px;border-radius:8px;">另存为预设</button>
+                                    <button type="button" id="manage-presets-btn" class="btn" style="padding:7px 10px;border-radius:8px;">管理</button>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-neutral" id="reset-custom-bubble-css-btn" style="margin-top: 10px; width: auto; padding: 5px 15px; font-size: 14px;">恢复默认</button>
+                        </div>
+                    </div>
+                </details>
+
+                <!-- 类别五：线下模式专属设置 -->
+                <details class="settings-category">
+                    <summary>线下模式专属设置</summary>
+                     <div class="settings-content-wrapper">
+                        <div class="form-group" style="display: flex; align-items: center; justify-content: space-between;">
+                            <label for="setting-offline-mode" style="margin-bottom: 0;">开启线下模式 (仅此角色)</label>
+                            <input type="checkbox" id="setting-offline-mode" style="width: auto; height: 20px;">
+                        </div>
+                        <div class="form-group">
+                            <label for="offline-font-size-range">剧情字号</label>
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <input id="offline-font-size-range" type="range" min="12" max="24" step="1" style="flex:1;">
+                                <span id="offline-font-size-value" style="width:56px; text-align:right;">16px</span>
+                            </div>
+                        </div>
+                        <div class="form-group" style="display: flex; align-items: center; justify-content: space-between;">
+                            <label for="offline-use-custom-word-count" style="margin-bottom: 0;">自定义字数范围</label>
+                            <input type="checkbox" id="offline-use-custom-word-count" style="width: auto; height: 20px;">
+                        </div>
+                        <div id="offline-word-count-fields" style="display: none; border-left: 3px solid #fce4ec; padding-left: 15px; margin-top: -10px; margin-bottom: 20px;">
+                            <div class="form-group">
+                                <label for="offline-min-words">最少字数</label>
+                                <input type="number" id="offline-min-words" min="50" value="300">
+                            </div>
+                            <div class="form-group">
+                                <label for="offline-max-words">最多字数</label>
+                                <input type="number" id="offline-max-words" min="100" value="500">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="offline-bubble-preset-select">气泡预设</label>
+                            <select id="offline-bubble-preset-select"></select>
+                        </div>
+                        <div class="form-group" style="display: flex; align-items: center; justify-content: space-between;">
+                            <label for="offline-use-custom-css" style="margin-bottom: 0;">启用线下模式的气泡</label>
+                            <input type="checkbox" id="offline-use-custom-css" style="width: auto; height: 20px;">
+                        </div>
+                        <div class="form-group" id="offline-custom-css-container" style="display: none;">
+                            <textarea id="offline-custom-css" rows="6" placeholder="/* 示例： */\n.plot-bubble {\n  background: #333;\n  color: #fff;\n}"></textarea>
+                        </div>
+                        <div id="offline-presets-control" style="margin-top: 10px; padding: 12px; border-radius: 10px; border: 1px solid #fce4ec; background: #fff8fa;">
+                            <div style="display:flex; gap:8px; justify-content:flex-end;">
+                                <button type="button" id="offline-save-preset-btn" class="btn btn-secondary btn-small">另存为预设</button>
+                                <button type="button" id="offline-manage-presets-btn" class="btn btn-neutral btn-small">管理预设</button>
+                            </div>
+                        </div>
+                    </div>
+                </details>
+
+                <!-- 类别六：高级功能 -->
+                <details class="settings-category">
+                    <summary>高级功能</summary>
+                    <div class="settings-content-wrapper">
+                        <div class="form-group">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <label for="private-ai-proactive-chat-toggle" style="margin-bottom:0;">开启AI后台回复</label>
+                                <input type="checkbox" id="private-ai-proactive-chat-toggle" style="width: auto;">
+                            </div>
+                            <div id="private-ai-proactive-options" style="display: none;">
+                                <label for="private-ai-proactive-chat-delay">无回复超过 (分钟)</label>
+                                <input type="number" id="private-ai-proactive-chat-delay" min="1" placeholder="例如：30">
+                                <label for="private-ai-proactive-chat-interval" style="margin-top: 10px;">AI后台回复间隔时间 (分钟)</label>
+                                <input type="number" id="private-ai-proactive-chat-interval" min="1" placeholder="例如：60">
+                            </div>
+                        </div>
+                        <div class="form-group" style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #eee; padding-top: 20px;">
+                            <label for="setting-share-stickers" style="margin-bottom: 0;">共享表情包</label>
+                            <input type="checkbox" id="setting-share-stickers" style="width: auto; height: 20px;">
+                        </div>
+                        <div class="form-group" style="margin-top: 20px;">
+                            <button type="button" class="btn btn-secondary" id="search-history-btn">搜索聊天记录</button>
+                        </div>
+                    </div>
+                </details>
+                
+                <button type="submit" class="btn btn-primary" style="margin-top: 20px;">保存设置</button>
+                
+                <hr style="border:none; border-top:1px solid #eee; margin: 20px 0;">
+                <button type="button" class="btn btn-danger" id="block-user-btn">拉黑</button>
+                <hr style="border:none; border-top:1px solid #eee; margin: 20px 0;">
+                <button type="button" class="btn btn-danger" id="clear-chat-history-btn">清空聊天记录</button>
+            </form>
+        </div>
     </div>
 </div>
-<!-- ▲▲▲ 替换结束 ▲▲▲ -->
+<!-- ▲▲▲ 粘贴结束 ▲▲▲ -->
     <div id="world-book-selection-modal" class="modal-overlay">
         <div class="modal-window">
             <h3>选择要关联的世界书</h3>
@@ -18489,15 +18528,15 @@ function parseAuroraTheaterFormat(fileName, data) {
                 option.textContent = colorThemes[key].name;
                 themeSelect.appendChild(option);
             });
-            chatSettingsBtn.addEventListener('click', () => {
-                if (currentChatType === 'private') {
-                    loadSettingsToSidebar();
-                    settingsSidebar.classList.add('open');
-                } else if (currentChatType === 'group') {
-                    loadGroupSettingsToSidebar();
-                    groupSettingsSidebar.classList.add('open');
-                }
-            });
+chatSettingsBtn.addEventListener('click', () => {
+    if (currentChatType === 'private') {
+        loadSettingsToSidebar();
+        document.getElementById('chat-settings-modal').classList.add('visible'); // <-- 修改后
+    } else if (currentChatType === 'group') {
+        loadGroupSettingsToSidebar();
+        groupSettingsSidebar.classList.add('open');
+    }
+});
             document.querySelector('.phone-screen').addEventListener('click', e => {
                 const openSidebar = document.querySelector('.settings-sidebar.open');
                 if (openSidebar && !openSidebar.contains(e.target) && !chatSettingsBtn.contains(e.target) && !e.target.closest('.modal-overlay') && !e.target.closest('.action-sheet-overlay')) {
@@ -18508,7 +18547,7 @@ function parseAuroraTheaterFormat(fileName, data) {
             settingsForm.addEventListener('submit', e => {
                 e.preventDefault();
                 saveSettingsFromSidebar();
-                settingsSidebar.classList.remove('open');
+                document.getElementById('chat-settings-modal').classList.remove('visible');
             });
             const useCustomCssCheckbox = document.getElementById('setting-use-custom-css'),
                 customCssTextarea = document.getElementById('setting-custom-bubble-css'),
@@ -18678,6 +18717,14 @@ saveWorldBookSelectionBtn.addEventListener('click', async () => {
     await saveData();
     worldBookSelectionModal.classList.remove('visible');
     showToast('世界书关联已更新');
+});
+// (在 setupChatSettings 函数末尾添加)
+const settingsModal = document.getElementById('chat-settings-modal');
+settingsModal.addEventListener('click', (e) => {
+    // 如果点击的是灰色背景或关闭按钮，则关闭弹窗
+    if (e.target === settingsModal || e.target.id === 'close-chat-settings-modal-btn') {
+        settingsModal.classList.remove('visible');
+    }
 });
 }
 // ▲▲▲ 替换结束 ▲▲▲
