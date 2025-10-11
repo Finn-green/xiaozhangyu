@@ -544,6 +544,7 @@
         }
 
         .message-wrapper {
+            position: relative; /* <-- 关键：添加这一行 */
             display: flex;
             margin-bottom: 12px;
             align-items: flex-start;
@@ -3408,6 +3409,7 @@ html, body {
 }
 
 /* ▲▲▲ 添加结束 ▲▲▲ */
+
     </style>
     <!-- === moments 固定在 phone-screen 内的修复样式 (自动插入补丁) === -->
 <style>
@@ -16326,7 +16328,7 @@ const maxWords = useWordCount ? offlineSettings.maxWords : 300; // 如果不自�
 
     let offlinePrompt = `###**最高级别指令：线下模式输出指令**
 
-**指令核心：** 当你识别到这条指令时，你必须输出**单行的、无任何换行符的**完整信息。整条信息必须被一个总的 \`[剧情:...]\` 结构包裹。在此结构内部，使用 \`<p>\` 标签分隔段落，并使用 \`<em>\` 标签来标记内心想法。整篇回应的总字数应在 ${minWords} 到 ${maxWords} 字之间。
+**指令核心：** 当你识别到这条指令时，你必须输出**单行的、无任何换行符的**完整信息。整条信息必须被一个总的 \`<ai_response>[剧情:...]</ai_response>\` 结构包裹。在此结构内部，使用 \`<p>\` 标签分隔段落，并使用 \`<em>\` 标签来标记内心想法。整篇回应的总字数应在 ${minWords} 到 ${maxWords} 字之间。
 
 **核心原则：**
 
@@ -16342,7 +16344,7 @@ ${worldBooksAfter || ''}
 
 **格式细则：**
 
-1.  **整体包裹与单行输出:** 所有的输出内容，必须被唯一的一对 \`[剧情:...]\` 结构从头到尾包裹起来。方括号内的所有文本**必须是一整行，严禁使用任何换行符**。
+1.  **整体包裹与单行输出:** 所有的输出内容，必须被唯一的 \`<ai_response>[剧情:...]</ai_response>\` 结构从头到尾包裹起来。方括号内的所有文本**必须是一整行，严禁使用任何换行符**。
 
 2.  **段落分隔:** 所有的逻辑段落（包括描写和对话）都**必须**使用一对 \`<p></p>\` 标签包裹。
 
@@ -16356,13 +16358,13 @@ ${worldBooksAfter || ''}
 
 **输出示例（请严格遵守此格式和细节要求）：**
 
-[剧情:<p>午后的阳光透过巨大的落地窗，在木质地板上投下斑驳的光影。空气中弥漫着现磨咖啡豆的浓郁香气和一丝若有若-无的柠檬挞甜味。他比约定时间早到了十分钟，选了一个靠窗的位置坐下，指尖无意识地在温热的瓷杯壁上轻轻滑动。<em>不知道她是否和照片上一样……希望我今天这身休闲西装不会显得太刻意。</em></p><p>他深吸一口气，试图平复那有些过于雀跃的心跳。就在这时，咖啡馆门口的风铃发出清脆的响声，一位穿着米色风衣的女士走了进来，她的目光在店内巡视了一圈，最终落在了他身上。她微笑着走了过来，高跟鞋敲击地面的声音在和缓的爵士乐中显得格外清晰。</p><p>他立刻站起身，脸上努力挤出一个自认为最温和的笑容。</p><p>"你好，请问是林女士吗？我是张伟。"</p><p><em>她的眼睛比照片上更亮，像盛着星光。</em>她轻轻颔首，将手中的一本旧书放在桌上，发出轻微的声响。</p><p>"你好，张先生。很高兴见到你。"</p><p>她的声音和他想象中一样，带着一种温润的质感，让人感到莫名的安心。他拉开对面的椅子，一阵淡淡的栀子花香随着她的动作飘散开来。<em>原来是这个味道，很适合她。</em></p><p>他重新坐下，感觉手心微微有些出汗，不知接下来该如何开启话题才能显得不那么笨拙。</p>]
+<ai_response>[剧情:<p>午后的阳光透过巨大的落地窗，在木质地板上投下斑驳的光影。空气中弥漫着现磨咖啡豆的浓郁香气和一丝若有若-无的柠檬挞甜味。他比约定时间早到了十分钟，选了一个靠窗的位置坐下，指尖无意识地在温热的瓷杯壁上轻轻滑动。<em>不知道她是否和照片上一样……希望我今天这身休闲西装不会显得太刻意。</em></p><p>他深吸一口气，试图平复那有些过于雀跃的心跳。就在这时，咖啡馆门口的风铃发出清脆的响声，一位穿着米色风衣的女士走了进来，她的目光在店内巡视了一圈，最终落在了他身上。她微笑着走了过来，高跟鞋敲击地面的声音在和缓的爵士乐中显得格外清晰。</p><p>他立刻站起身，脸上努力挤出一个自认为最温和的笑容。</p><p>"你好，请问是林女士吗？我是张伟。"</p><p><em>她的眼睛比照片上更亮，像盛着星光。</em>她轻轻颔首，将手中的一本旧书放在桌上，发出轻微的声响。</p><p>"你好，张先生。很高兴见到你。"</p><p>她的声音和他想象中一样，带着一种温润的质感，让人感到莫名的安心。他拉开对面的椅子，一阵淡淡的栀子花香随着她的动作飘散开来。<em>原来是这个味道，很适合她。</em></p><p>他重新坐下，感觉手心微微有些出汗，不知接下来该如何开启话题才能显得不那么笨拙。</p>]</ai_response>
 
 
 **内容创作指导:**
 
 *   **结构化叙事:** 将 \`<p>\` 标签视为叙事的节拍器。用它来分隔场景描写、动作序列、内心独白和角色对话，创造清晰的阅读节奏。
-*   **满足字数:** 在这个单行结构中，依然要保证总字数不少于300字，这意味着你需要构建足够丰富和详细的描写。
+*   **满足字数:** 在这个单行结构中，依然要保证总字数不少于${minWords}字，这意味着你需要构建足够丰富和详细的描写。
 *   **展现角色性格:** 通过环境描写、动作、\`<em>\`标签内的内心戏和独立的对话\`<p>\`标签，立体地塑造角色。
 *   **情绪底线：坚韧与希望:** 你所扮演的角色可以经历深刻的悲伤、挣扎、愤怒或迷茫，但绝不允许陷入完全的、不可逆转的绝望状态。角色的内心必须始终保有一丝韧性或对未来的微光。即使身处逆境，也要展现出生命的力量和寻求转机的可能性，而非彻底的自我放弃。
 *   **人设风格：尊重与温和:** 严格禁止任何形式的“霸总式”言行。角色的魅力应来源于其内在的品格、智慧和共情能力，而非通过权力、财富或高压姿态来体现。所有互动都应基于平等、尊重和真诚的好奇心。对话应是沟通的桥梁，而不是单方面的命令或宣告。基调应以细腻、体贴的女性向感受为核心。
@@ -16382,7 +16384,19 @@ ${worldBooksAfter || ''}
 
     const forceTheater = db.apiSettings.forceHtmlTheater;
     const autoPostMoment = db.apiSettings.aiAutoPostMoment; // ▼▼▼ 在这里添加新代码 ▼▼▼
-    let prompt = `你正在一个名为“404”的线上聊天软件中扮演一个角色。请严格遵守以下规则：\n`;
+    let prompt = `你正在一个名为“404”的线上聊天软件中扮演一个角色。
+### 最高级别指令：输出格式 ###
+你的整个回复 **必须** 被一个总的 \`<ai_response>...</ai_response>\` 标签从头到尾包裹起来。在这个标签内部，你可以生成一条或多条消息，每条消息占一行。
+
+### 输出示例 (必须严格遵守) ###
+<ai_response>
+[${character.realName}的消息：这是第一条回复。]
+[${character.realName}的消息：这是第二条回复，我们可以聊聊别的话题。]
+[new-memory:{"title":"一个回忆标题","content":"...","commentary":"..."}]
+</ai_response>
+
+---
+请严格遵守以下规则：\n`;
     // === 新增：拉黑行为规则 (最高优先级) ===
     prompt += `## 行为准则 (最高优先级)\n`;
     prompt += `1. **拉黑状态处理**: 如果历史记录中最新的消息是 **"[system: 你已被 ${character.myName} 拉黑。]"**，你的行为模式将彻底改变。你**必须**：\n`;
@@ -16616,7 +16630,18 @@ prompt += `
             const worldBooksBefore = (group.worldBookIds || []).map(id => db.worldBooks.find(wb => wb.id === id && wb.position === 'before')).filter(Boolean).map(wb => wb.content).join('\n');
             const worldBooksAfter = (group.worldBookIds || []).map(id => db.worldBooks.find(wb => wb.id === id && wb.position === 'after')).filter(Boolean).map(wb => wb.content).join('\n');
 
-            let prompt = `你正在一个名为“404”的线上聊天软件中，在一个名为“${group.name}”的群聊里进行角色扮演。请严格遵守以下所有规则：\n\n`;
+            let prompt = `你正在一个名为“404”的线上聊天软件中，在一个名为“${group.name}”的群聊里进行角色扮演。
+### 最高级别指令：输出格式 ###
+你的整个回复 **必须** 被一个总的 \`<ai_response>...</ai_response>\` 标签从头到尾包裹起来。在这个标签内部，你可以生成一条或多条来自不同角色的消息，每条消息占一行。
+
+### 输出示例 (必须严格遵守) ###
+<ai_response>
+[{成员A真名}的消息：大家好呀！]
+[{成员B真名}的消息：@${group.me.nickname} 欢迎回来！我们刚才还在讨论你呢。]
+</ai_response>
+
+---            
+            请严格遵守以下所有规则：\n\n`;
 
             if (worldBooksBefore) {
                 prompt += `${worldBooksBefore}\n\n`;
@@ -17249,8 +17274,17 @@ async function processStream(response, chat, apiType) {
     }
 
     if (fullResponse) {
+        // ▼▼▼ 在这里添加新的解析逻辑 ▼▼▼
+        let contentToProcess = fullResponse;
+        const responseMatch = fullResponse.match(/<ai_response>([\s\S]*)<\/ai_response>/);
+        if (responseMatch && responseMatch[1]) {
+            contentToProcess = responseMatch[1].trim();
+        }
+        // ▲▲▲ 添加结束 ▲▲▲
+
         // --- 新增：在这里调用中央指令处理器 ---
-        fullResponse = await processAiCommands(fullResponse, chat);
+        // 修改：使用 contentToProcess 而不是 fullResponse
+        contentToProcess = await processAiCommands(contentToProcess, chat); 
         // --- 新增结束 ---
     	// ▼▼▼ 在这里添加新的代码块 ▼▼▼
 if (fullResponse.includes('[accept-bond]')) {
@@ -33018,6 +33052,9 @@ fileInput.addEventListener('change', async (e)=>{
         <!-- 更新日志内容区域 -->
         <div id="update-content" style="max-height: 40vh; overflow-y: auto; background-color: #f9f9f9; padding: 10px 15px; border-radius: 8px; margin-bottom: 20px;">
             <ul>
+                <li><strong>修复</strong>：非流式模型输出失败的问题，但现在也可能不稳定，如果还是无法输出，请使用流式输出的模型！目前我测试的火喵喵和熊猫的100k模型都可以正常出！推荐使用星星公益站，我用这个没有出过问题。欢迎大家来dc@我反馈。</li>
+                <li><strong>修复</strong>：群聊角色名称显示异常的问题</li>
+                <li><strong>——以下是旧版本的更新内容——</strong></li>
                 <li><strong>新增</strong>：聊天设置界面现已支持折叠分类，界面更清爽！</li>
                 <li><strong>新增</strong>：更新了线下模式，现在可以roll出来啦！线下模式有专属的气泡哦。</li>
                 <li><strong>新增</strong>：表情包搜索功能，如果导入了很多表情包，可以更方便搜索啦</li>
@@ -33123,7 +33160,7 @@ fileInput.addEventListener('change', async (e)=>{
         // ==========================================================
         // == 核心配置：每次更新时，修改这里的版本号即可让弹窗重新出现 ==
         // ==========================================================
-        const UPDATE_VERSION = '1.0.2'; // 例如：1.0.1, 1.0.2, 'new_feature_update'
+        const UPDATE_VERSION = '1.0.3'; // 例如：1.0.1, 1.0.2, 'new_feature_update'
         
         const STORAGE_KEY = `updatePopupDismissed_v${UPDATE_VERSION}`;
 
