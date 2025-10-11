@@ -7909,11 +7909,10 @@ const locationBtn = document.getElementById('location-btn'),
         const dataStorage = new OptimizedDataStorage();
 
         // 兼容性适配器 - 保持原有API接口
-// 兼容性适配器 - 保持原有API接口
         const saveData = async (data) => {
             const dbData = data ? data : db;
 
-            // 分离出所有需要独立保存的重要数据
+            // 修改：分离出所有需要独立保存的重要数据
             const { 
                 characters, 
                 groups, 
@@ -7931,7 +7930,7 @@ const locationBtn = document.getElementById('location-btn'),
             // 保存剩余的基础数据
             await dataStorage.saveData('章鱼喷墨机', baseData);
 
-            // 为每一项重要数据创建独立的保存通道
+            // 新增：为每一项重要数据创建独立的保存通道
             if (worldBooks) await dataStorage.saveData('worldBooks_data', worldBooks);
             if (apiSettings) await dataStorage.saveData('apiSettings_data', apiSettings);
             if (customIcons) await dataStorage.saveData('customIcons_data', customIcons);
@@ -7941,25 +7940,32 @@ const locationBtn = document.getElementById('location-btn'),
             if (homeProfile) await dataStorage.saveData('homeProfile_data', homeProfile);
 
 
-            // ▼▼▼ 核心修复：只保存角色元数据，不再保存聊天记录(history) ▼▼▼
+            // 分别保存角色和群组数据（包含消息）
             if (characters) {
                 for (const char of characters) {
+                    // 保存消息到分块存储
+                    if (char.history && char.history.length > 0) {
+                        await dataStorage.saveChatMessages(char.id, 'private', char.history);
+                    }
                     // 保存角色基础信息（不包含history）
                     const { history, ...charData } = char;
-                    charData.history = []; // 保持内存中db对象的结构一致性，但存入数据库的是空数组
+                    charData.history = []; // 保持兼容性
                     await dataStorage.saveData(`character_${char.id}`, charData);
                 }
             }
 
             if (groups) {
                 for (const group of groups) {
+                    // 保存消息到分块存储
+                    if (group.history && group.history.length > 0) {
+                        await dataStorage.saveChatMessages(group.id, 'group', group.history);
+                    }
                     // 保存群组基础信息（不包含history）
                     const { history, ...groupData } = group;
-                    groupData.history = []; // 保持内存中db对象的结构一致性
+                    groupData.history = []; // 保持兼容性
                     await dataStorage.saveData(`group_${group.id}`, groupData);
                 }
             }
-            // ▲▲▲ 修复结束 ▲▲▲
 
             return Promise.resolve();
         };
@@ -12952,14 +12958,12 @@ function renderCustomizeForm() {
             importDataBtn.setAttribute('for', 'import-data-input');
             
             // --- 修改：更新导入逻辑 ---
-// --- 核心修复 V2.0：升级导入逻辑以适配新数据库结构 ---
             document.querySelector('#import-data-input').addEventListener('change', async (event) => {
                 const file = event.target.files[0];
                 if (!file) return;
 
                 if(confirm('此操作将覆盖当前所有数据（包括聊天、设置和预设）。此操作不可撤销。确定要继续吗？')){
                     try {
-                        showToast('正在导入并解压数据，请稍候...');
                         const decompressionStream = new DecompressionStream('gzip');
                         const decompressedStream = file.stream().pipeThrough(decompressionStream);
                         const jsonString = await new Response(decompressedStream).text();
@@ -12967,7 +12971,7 @@ function renderCustomizeForm() {
 
                         let dbDataToSave;
 
-                        // 检查是新格式(带dbData和localStorageData)还是旧格式的备份
+                        // 新增：检查是新格式还是旧格式的备份
                         if (importedObject.dbData) { // 新格式
                             // 恢复localStorage中的预设
                             if (importedObject.localStorageData) {
@@ -12978,57 +12982,25 @@ function renderCustomizeForm() {
                             dbDataToSave = importedObject.dbData;
                         } else { // 旧格式
                             dbDataToSave = importedObject;
-                            showToast('提示：正在导入旧版备份...');
+                            showToast('提示：正在导入旧版备份，部分设置（如预设）可能不会被恢复。');
                         }
 
-                        // ▼▼▼ 核心修复逻辑开始 ▼▼▼
-
-                        // 1. 彻底清空当前所有数据，为导入做准备
+                        // 清空旧数据
                         await dataStorage.clearAll();
                         if (window.AppDB_Moments && window.AppDB_Moments.moments) {
                             await window.AppDB_Moments.moments.clear();
                         }
                         
-                        // 2. 恢复动态数据
+                        // 恢复动态数据
                         if (dbDataToSave.momentsData && Array.isArray(dbDataToSave.momentsData)) {
                              if (window.AppDB_Moments && window.AppDB_Moments.moments) {
                                 await window.AppDB_Moments.moments.bulkPut(dbDataToSave.momentsData);
                             }
                             delete dbDataToSave.momentsData;
                         }
-
-                        // 3. 分离出角色和群组数据
-                        const { characters, groups, ...baseData } = dbDataToSave;
-
-                        // 4. 保存除角色和群组外的所有其他数据 (如设置、世界书等)
-                        await saveData(baseData); // 调用我们修改过的saveData，它只处理非角色/群组数据
-
-                        // 5. 遍历所有角色，分别保存它们的聊天记录和元数据
-                        if (characters && Array.isArray(characters)) {
-                            for (const char of characters) {
-                                // a. 如果有聊天记录，则使用 saveChatMessages 保存
-                                if (char.history && char.history.length > 0) {
-                                    await dataStorage.saveChatMessages(char.id, 'private', char.history);
-                                }
-                                // b. 保存角色本身的设置（不含历史记录）
-                                const { history, ...charData } = char;
-                                await dataStorage.saveData(`character_${char.id}`, charData);
-                            }
-                        }
-
-                        // 6. 遍历所有群组，做同样的处理
-                        if (groups && Array.isArray(groups)) {
-                            for (const group of groups) {
-                                if (group.history && group.history.length > 0) {
-                                    await dataStorage.saveChatMessages(group.id, 'group', group.history);
-                                }
-                                const { history, ...groupData } = group;
-                                await dataStorage.saveData(`group_${group.id}`, groupData);
-                            }
-                        }
                         
-                        // ▲▲▲ 核心修复逻辑结束 ▲▲▲
-                        
+                        // 保存新的主数据
+                        await saveData(dbDataToSave);
                         showToast(`数据已成功恢复。应用即将刷新。`);
                         setTimeout(() => window.location.reload(), 1500);
 
@@ -14207,42 +14179,35 @@ function startMessageEdit(messageId) {
 // ▼▼▼ 用这两个新函数，替换旧的 saveMessageEdit 和 cancelMessageEdit ▼▼▼
 
 async function saveMessageEdit() {
-            const modal = document.getElementById('edit-message-modal');
-            const textarea = document.getElementById('message-edit-textarea');
-            const messageId = document.getElementById('editing-message-id-modal').value;
+    const modal = document.getElementById('edit-message-modal');
+    const textarea = document.getElementById('message-edit-textarea');
+    const messageId = document.getElementById('editing-message-id-modal').value;
 
-            const chat = (currentChatType === 'private') ? db.characters.find(c => c.id === currentChatId) : db.groups.find(g => g.id === currentChatId);
-            const messageIndex = chat.history.findIndex(m => m.id === messageId);
-            if (messageIndex === -1) return;
+    const chat = (currentChatType === 'private') ? db.characters.find(c => c.id === currentChatId) : db.groups.find(g => g.id === currentChatId);
+    const messageIndex = chat.history.findIndex(m => m.id === messageId);
+    if (messageIndex === -1) return;
 
-            const newText = textarea.value.trim();
-            if (newText) {
-                const oldContent = chat.history[messageIndex].content;
-                const prefixMatch = oldContent.match(/(\[.*?的消息：)[\s\S]+\]/);
-                const prefix = prefixMatch ? prefixMatch[1] : `[${(currentChatType === 'private' ? chat.myName : chat.me.nickname)}的消息：`;
-                
-                const newContent = `${prefix}${newText}]`;
-                
-                // ▼▼▼ 核心修复 ▼▼▼
-                // 1. 更新内存中的消息
-                chat.history[messageIndex].content = newContent;
-                if (chat.history[messageIndex].parts) {
-                    chat.history[messageIndex].parts = [{type: 'text', text: newContent}];
-                }
-
-                // 2. 调用数据库更新方法
-                await dataStorage.updateMessage(currentChatId, currentChatType, messageId, {
-                    content: newContent,
-                    parts: [{type: 'text', text: newContent}]
-                });
-                // ▲▲▲ 修复结束 ▲▲▲
-                
-                renderMessages(false, true);
-                renderChatList();
-            }
-            
-            modal.classList.remove('visible');
+    const newText = textarea.value.trim();
+    if (newText) {
+        const oldContent = chat.history[messageIndex].content;
+        const prefixMatch = oldContent.match(/(\[.*?的消息：)[\s\S]+\]/);
+        const prefix = prefixMatch ? prefixMatch[1] : `[${(currentChatType === 'private' ? chat.myName : chat.me.nickname)}的消息：`;
+        
+        const newContent = `${prefix}${newText}]`;
+        chat.history[messageIndex].content = newContent;
+        if (chat.history[messageIndex].parts) {
+            chat.history[messageIndex].parts = [{type: 'text', text: newContent}];
         }
+        await saveData();
+        
+        // 刷新UI
+        renderMessages(false, true);
+        renderChatList();
+    }
+    
+    // 关闭弹窗
+    modal.classList.remove('visible');
+}
 
 function cancelMessageEdit() {
     // 现在这个函数的功能就是关闭弹窗
@@ -14312,21 +14277,12 @@ function exitMultiSelectMode() {
             deleteSelectedBtn.disabled = selectedMessageIds.size === 0;
         }
 
-async function deleteSelectedMessages() {
+        async function deleteSelectedMessages() {
             if (selectedMessageIds.size === 0) return;
             const deletedCount = selectedMessageIds.size;
             const chat = (currentChatType === 'private') ? db.characters.find(c => c.id === currentChatId) : db.groups.find(g => g.id === currentChatId);
-
-            // ▼▼▼ 核心修复 ▼▼▼
-            // 1. 从内存中过滤掉被删除的消息
             chat.history = chat.history.filter(m => !selectedMessageIds.has(m.id));
-
-            // 2. 遍历ID，逐个在数据库中删除
-            for (const messageId of selectedMessageIds) {
-                await dataStorage.deleteMessage(currentChatId, currentChatType, messageId);
-            }
-            // ▲▲▲ 修复结束 ▲▲▲
-
+            await saveData();
             currentPage = 1;
             renderMessages(false, true);
             renderChatList();
@@ -15403,14 +15359,18 @@ async function sendMessage() {
     const text = currentInputElement.value.trim();
     if (!text || isGenerating) return;
     
+    // --- ▼▼▼ 核心修改：立即清空输入框 ▼▼▼ ---
     currentInputElement.value = '';
+    // --- ▲▲▲ 修改结束 ▲▲▲ ---
 
     const chat = (currentChatType === 'private') 
         ? db.characters.find(c => c.id === currentChatId) 
         : db.groups.find(g => g.id === currentChatId);
     if (!chat) return;
 
+    // --- 核心修改：判断是否处于拉黑状态 ---
     if (currentChatType === 'private' && chat.isBlockedByUser) {
+        // ** 拉黑状态下的处理逻辑 **
         const myName = chat.myName;
         const messageContent = `[${myName}的消息：${text}]`;
         const message = {
@@ -15421,21 +15381,25 @@ async function sendMessage() {
             timestamp: Date.now()
         };
 
+        // 1. 将消息存入暂存区
         chat.pendingMessages = chat.pendingMessages || [];
         chat.pendingMessages.push(message);
+
+        // 2. 仅在用户界面显示气泡，AI此时看不到
         addMessageBubble(message);
         
-        // ▼▼▼ 核心修复：这里只调用 saveData 保存元数据（如 pendingMessages），而不是整个历史 ▼▼▼
+        // 3. 保存数据，但不触发AI回复
         await saveData();
-        // ▲▲▲ 修复结束 ▲▲▲
                 
-        return;
+        return; // 提前结束函数
     }
 
+    // --- 以下是未被拉黑时的原始逻辑 ---
     let message;
     const myName = (currentChatType === 'private') ? chat.myName : chat.me.nickname;
 
     if (currentQuotedMessageId) {
+        // (引用回复的逻辑保持不变)
         const originalMessage = chat.history.find(m => m.id === currentQuotedMessageId);
         if (!originalMessage) {
             cancelQuoteReply();
@@ -15475,6 +15439,7 @@ async function sendMessage() {
 
         cancelQuoteReply();
     } else {
+        // (普通消息的逻辑保持不变)
         const systemRegex = /\[system:.*?\]|\[system-display:.*?\]/;
         const inviteRegex = /\[.*?邀请.*?加入了群聊\]/;
         const renameRegex = /\[(.*?)修改群名为：(.*?)\]/;
@@ -15503,30 +15468,25 @@ async function sendMessage() {
     if (currentChatType === 'group') {
         message.senderId = 'user_me';
     }
-    
     chat.history.push(message);
     addMessageBubble(message);
-    
-    // ▼▼▼ 核心修复：用增量更新替换全量保存 ▼▼▼
-    await dataStorage.addMessage(currentChatId, currentChatType, message);
-    // ▲▲▲ 修复结束 ▲▲▲
-
+    await saveData();
     renderChatList();
     if (chat.povCache) {
         chat.povCache = null;
     }
     
+    // 优化点：清空当前正在使用的输入框
     currentInputElement.value = '';
 }
 
-async function sendImageForRecognition(base64Data) {
-            if (currentChatType === 'private') {
-                const character = db.characters.find(c => c.id === currentChatId);
-                if (character && character.isBlockedByAi) {
-                    showToast('你已被对方拉黑');
-                    return;
-                }
-            }
+        async function sendImageForRecognition(base64Data) {if (currentChatType === 'private') {
+    const character = db.characters.find(c => c.id === currentChatId);
+    if (character && character.isBlockedByAi) {
+        showToast('你已被对方拉黑');
+        return; // 阻止函数继续执行
+    }
+}
             if (!base64Data || isGenerating) return;
             const chat = (currentChatType === 'private') ? db.characters.find(c => c.id === currentChatId) : db.groups.find(g => g.id === currentChatId);
             const myName = (currentChatType === 'private') ? chat.myName : chat.me.nickname;
@@ -15543,20 +15503,17 @@ async function sendImageForRecognition(base64Data) {
             }
             chat.history.push(message);
             addMessageBubble(message);
-            // ▼▼▼ 核心修复 ▼▼▼
-            await dataStorage.addMessage(currentChatId, currentChatType, message);
-            // ▲▲▲ 修复结束 ▲▲▲
+            await saveData();
             renderChatList();
         }
 
-        async function sendSticker(sticker) {
-            if (currentChatType === 'private') {
-                const character = db.characters.find(c => c.id === currentChatId);
-                if (character && character.isBlockedByAi) {
-                    showToast('你已被对方拉黑');
-                    return;
-                }
-            }
+        async function sendSticker(sticker) {if (currentChatType === 'private') {
+    const character = db.characters.find(c => c.id === currentChatId);
+    if (character && character.isBlockedByAi) {
+        showToast('你已被对方拉黑');
+        return; // 阻止函数继续执行
+    }
+}
             const chat = (currentChatType === 'private') ? db.characters.find(c => c.id === currentChatId) : db.groups.find(g => g.id === currentChatId);
             const myName = (currentChatType === 'private') ? chat.myName : chat.me.nickname;
             const messageContentForAI = `[${myName}的表情包：${sticker.name}]`;
@@ -15573,21 +15530,18 @@ async function sendImageForRecognition(base64Data) {
             }
             chat.history.push(message);
             addMessageBubble(message);
-            // ▼▼▼ 核心修复 ▼▼▼
-            await dataStorage.addMessage(currentChatId, currentChatType, message);
-            // ▲▲▲ 修复结束 ▲▲▲
+            await saveData();
             renderChatList();
             stickerModal.classList.remove('visible');
         }
 
-        async function sendMyVoiceMessage(text) {
-            if (currentChatType === 'private') {
-                const character = db.characters.find(c => c.id === currentChatId);
-                if (character && character.isBlockedByAi) {
-                    showToast('你已被对方拉黑');
-                    return;
-                }
-            }
+        async function sendMyVoiceMessage(text) {if (currentChatType === 'private') {
+    const character = db.characters.find(c => c.id === currentChatId);
+    if (character && character.isBlockedByAi) {
+        showToast('你已被对方拉黑');
+        return; // 阻止函数继续执行
+    }
+}
             if (!text) return;
             const chat = (currentChatType === 'private') ? db.characters.find(c => c.id === currentChatId) : db.groups.find(g => g.id === currentChatId);
             const myName = (currentChatType === 'private') ? chat.myName : chat.me.nickname;
@@ -15604,21 +15558,18 @@ async function sendImageForRecognition(base64Data) {
             }
             chat.history.push(message);
             addMessageBubble(message);
-            // ▼▼▼ 核心修复 ▼▼▼
-            await dataStorage.addMessage(currentChatId, currentChatType, message);
-            // ▲▲▲ 修复结束 ▲▲▲
+            await saveData();
             renderChatList();
             sendVoiceModal.classList.remove('visible');
         }
 
-        async function sendMyPhotoVideo(text) {
-            if (currentChatType === 'private') {
-                const character = db.characters.find(c => c.id === currentChatId);
-                if (character && character.isBlockedByAi) {
-                    showToast('你已被对方拉黑');
-                    return;
-                }
-            }
+        async function sendMyPhotoVideo(text) {if (currentChatType === 'private') {
+    const character = db.characters.find(c => c.id === currentChatId);
+    if (character && character.isBlockedByAi) {
+        showToast('你已被对方拉黑');
+        return; // 阻止函数继续执行
+    }
+}
             if (!text) return;
             const chat = (currentChatType === 'private') ? db.characters.find(c => c.id === currentChatId) : db.groups.find(g => g.id === currentChatId);
             const myName = (currentChatType === 'private') ? chat.myName : chat.me.nickname;
@@ -15635,32 +15586,33 @@ async function sendImageForRecognition(base64Data) {
             }
             chat.history.push(message);
             addMessageBubble(message);
-            // ▼▼▼ 核心修复 ▼▼▼
-            await dataStorage.addMessage(currentChatId, currentChatType, message);
-            // ▲▲▲ 修复结束 ▲▲▲
+            await saveData();
             renderChatList();
             sendPvModal.classList.remove('visible');
         }
 
-        async function sendMyTransfer(amount, remark) {
-            if (currentChatType === 'private') {
-                const character = db.characters.find(c => c.id === currentChatId);
-                if (character && character.isBlockedByAi) {
-                    showToast('你已被对方拉黑');
-                    return;
-                }
-            }
+               async function sendMyTransfer(amount, remark) {if (currentChatType === 'private') {
+    const character = db.characters.find(c => c.id === currentChatId);
+    if (character && character.isBlockedByAi) {
+        showToast('你已被对方拉黑');
+        return; // 阻止函数继续执行
+    }
+}
             const numericAmount = parseFloat(amount);
             if (isNaN(numericAmount) || numericAmount <= 0) {
                  showToast('请输入有效的金额');
                  return;
             }
+            
+            // --- 新增：支付逻辑 ---
              try {
                 await handlePayment(numericAmount, `转账`);
             } catch (error) {
                 showToast(error.message);
-                return;
+                return; // 中断转账流程
             }
+            // --- 支付逻辑结束 ---
+
             const chat = (currentChatType === 'private') ? db.characters.find(c => c.id === currentChatId) : db.groups.find(g => g.id === currentChatId);
             if (currentChatType === 'private') {
                 const content = `[${chat.myName}给你转账：${numericAmount.toFixed(2)}元；备注：${remark}]`;
@@ -15674,11 +15626,8 @@ async function sendImageForRecognition(base64Data) {
                 };
                 chat.history.push(message);
                 addMessageBubble(message);
-                // ▼▼▼ 核心修复 ▼▼▼
-                await dataStorage.addMessage(currentChatId, currentChatType, message);
-                // ▲▲▲ 修复结束 ▲▲▲
             } else { // Group chat
-                for (const recipientId of currentGroupAction.recipients) {
+                currentGroupAction.recipients.forEach(recipientId => {
                     const recipient = chat.members.find(m => m.id === recipientId);
                     if (recipient) {
                         const content = `[${chat.me.nickname} 向 ${recipient.realName} 转账：${numericAmount.toFixed(2)}元；备注：${remark}]`;
@@ -15692,33 +15641,39 @@ async function sendImageForRecognition(base64Data) {
                         };
                         chat.history.push(message);
                         addMessageBubble(message);
-                        // ▼▼▼ 核心修复 ▼▼▼
-                        await dataStorage.addMessage(currentChatId, currentChatType, message);
-                        // ▲▲▲ 修复结束 ▲▲▲
                     }
-                }
+                });
             }
+            await saveData();
             renderChatList();
             sendTransferModal.classList.remove('visible');
         }
 
-        async function sendMyGift(description, amount) {
+                      async function sendMyGift(description, amount) {
             if (!description) return;
+            
+            // --- ▼▼▼ 修改：支付逻辑使用动态价格 ▼▼▼ ---
             const giftPrice = parseFloat(amount); 
             if (isNaN(giftPrice) || giftPrice <= 0) {
                 showToast("请输入有效的礼物价格");
                 return;
             }
+
             const recipientName = (currentChatType === 'private') 
                 ? db.characters.find(c => c.id === currentChatId).remarkName 
                 : '群成员';
+
             try {
+                // 调用支付处理函数，使用用户输入的价格
                 await handlePayment(giftPrice, `送礼物给 ${recipientName}`);
             } catch (error) {
                 showToast(error.message); 
                 return; 
             }
+            // --- ▲▲▲ 修改结束 ▲▲▲ ---
+
             const chat = (currentChatType === 'private') ? db.characters.find(c => c.id === currentChatId) : db.groups.find(g => g.id === currentChatId);
+
             if (currentChatType === 'private') {
                 const content = `[${chat.myName}送来的礼物：${description}]`;
                 const message = {
@@ -15731,11 +15686,8 @@ async function sendImageForRecognition(base64Data) {
                 };
                 chat.history.push(message);
                 addMessageBubble(message);
-                // ▼▼▼ 核心修复 ▼▼▼
-                await dataStorage.addMessage(currentChatId, currentChatType, message);
-                // ▲▲▲ 修复结束 ▲▲▲
             } else { // Group chat
-                for (const recipientId of currentGroupAction.recipients) {
+                currentGroupAction.recipients.forEach(recipientId => {
                     const recipient = chat.members.find(m => m.id === recipientId);
                     if (recipient) {
                         const content = `[${chat.me.nickname} 向 ${recipient.realName} 送来了礼物：${description}]`;
@@ -15749,138 +15701,393 @@ async function sendImageForRecognition(base64Data) {
                         };
                         chat.history.push(message);
                         addMessageBubble(message);
-                        // ▼▼▼ 核心修复 ▼▼▼
-                        await dataStorage.addMessage(currentChatId, currentChatType, message);
-                        // ▲▲▲ 修复结束 ▲▲▲
                     }
-                }
+                });
             }
+            await saveData();
             renderChatList();
             sendGiftModal.classList.remove('visible');
         }
+        // --- NEW: Time Skip System ---
+        function setupTimeSkipSystem() {
+            timeSkipBtn.addEventListener('click', () => {
+                timeSkipForm.reset();
+                timeSkipModal.classList.add('visible');
+            });
+            timeSkipModal.addEventListener('click', (e) => {
+                if (e.target === timeSkipModal) timeSkipModal.classList.remove('visible');
+            });
+            timeSkipForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                sendTimeSkipMessage(timeSkipInput.value.trim());
+            });
+        }
 
-        async function sendTimeSkipMessage(text) {
-            if (currentChatType === 'private') {
-                const character = db.characters.find(c => c.id === currentChatId);
-                if (character && character.isBlockedByAi) {
-                    showToast('你已被对方拉黑');
-                    return;
-                }
-            }
-            if (!text) return;
-            const chat = (currentChatType === 'private') ? db.characters.find(c => c.id === currentChatId) : db.groups.find(g => g.id === currentChatId);
-            if (!chat) return;
+  // ▼▼▼ 在这里粘贴新的视频通话JS代码 ▼▼▼
 
-            const visualMessage = {
-                id: `msg_visual_${Date.now()}`,
-                role: 'system',
-                content: `[system-display:${text}]`,
-                parts: [],
-                timestamp: Date.now()
-            };
+function setupVoiceCallSystem() {
+    const voiceCallBtn = document.getElementById('voice-call-btn');
+    const voiceCallOverlay = document.getElementById('voice-call-overlay');
+    const callAvatar = document.getElementById('call-avatar');
+    const callName = document.getElementById('call-name');
+    const callStatus = document.getElementById('call-status');
+    const ringingView = document.getElementById('ringing-view');
+    const incomingButtons = document.getElementById('incoming-buttons');
+    const outgoingButtons = document.getElementById('outgoing-buttons');
+    const activeCallView = document.getElementById('active-call-view');
+    const callTranscriptArea = document.getElementById('call-transcript-area');
+    const hangupCallBtn = document.getElementById('hangup-call-btn');
+    const callInput = document.getElementById('call-input');
+    const sendCallMessageBtn = document.getElementById('send-call-message-btn');
+    const declineCallBtn = document.getElementById('decline-call-btn');
+    const acceptCallBtn = document.getElementById('accept-call-btn');
+    const cancelCallBtn = document.getElementById('cancel-call-btn');
+
+    voiceCallBtn.addEventListener('click', startUserInitiatedCall);
+    cancelCallBtn.addEventListener('click', () => endCall('ended'));
+    declineCallBtn.addEventListener('click', () => endCall('declined'));
+    acceptCallBtn.addEventListener('click', () => {
+        const character = db.characters.find(c => c.id === currentCallTargetId);
+        if (!character) return;
+        const contextMessage = {
+            id: `msg_call_${Date.now()}`, role: 'user',
+            content: `[system: ${character.myName} 接听了你的电话。]`,
+            parts: [{type: 'text', text: `[system: ${character.myName} 接听了你的电话。]`}],
+            timestamp: Date.now()
+        };
+        character.history.push(contextMessage);
+        saveData();
+        startActiveCall();
+    });
+    hangupCallBtn.addEventListener('click', () => endCall('ended'));
+    sendCallMessageBtn.addEventListener('click', sendCallMessage);
+    callInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendCallMessage();
+    });
+}
+
+function startUserInitiatedCall() {
+    if (isGenerating || currentChatType !== 'private') return;
+    const character = db.characters.find(c => c.id === currentChatId);
+    if (!character) return;
+
+    currentCallTargetId = character.id;
+    voiceCallOverlay.classList.add('visible');
+    ringingView.style.display = 'block';
+    activeCallView.style.display = 'none';
+    incomingButtons.style.display = 'none';
+    outgoingButtons.style.display = 'flex';
+
+    callAvatar.src = character.avatar;
+    callName.textContent = character.remarkName;
+    callStatus.textContent = '正在呼叫...';
+
+    isCallRinging = true;
+    callInitiationTimeout = setTimeout(() => {
+        if (isCallRinging) {
+            showToast('对方无应答');
+            endCall('timeout');
+        }
+    }, 60000); 
+
+    const callMessage = {
+        id: `msg_call_${Date.now()}`, role: 'user',
+        content: `[system: ${character.myName} 正在呼叫你，请根据你的人设决定是接听 [call-accept] 还是拒接 [call-decline]]`,
+        parts: [{type: 'text', text: `[system: ${character.myName} 正在呼叫你，请根据你的人设决定是接听 [call-accept] 还是拒接 [call-decline]]`}],
+        timestamp: Date.now()
+    };
+    character.history.push(callMessage);
+    saveData();
+    getAiReply();
+}
+
+function startAiInitiatedCall(characterId) {
+	isAiCalling = false; 
+    const character = db.characters.find(c => c.id === characterId);
+    if (!character) return;
+    
+    currentCallTargetId = character.id;
+    voiceCallOverlay.classList.add('visible');
+    ringingView.style.display = 'block';
+    activeCallView.style.display = 'none';
+    incomingButtons.style.display = 'flex';
+    outgoingButtons.style.display = 'none';
+
+    callAvatar.src = character.avatar;
+    callName.textContent = character.remarkName;
+    callStatus.textContent = '来电邀请...';
+}
+
+function startActiveCall() {
+    const character = db.characters.find(c => c.id === currentCallTargetId);
+    if (!character) return;
+
+    clearTimeout(callInitiationTimeout);
+    isCallRinging = false;
+    isVoiceCallActive = true;
+    voiceCallTranscript = [];
+    voiceCallStartTime = Date.now();
+    
+    document.getElementById('call-avatar').style.display = 'block';
+    document.getElementById('call-name').style.display = 'block';
+    
+    ringingView.style.display = 'none';
+    activeCallView.style.display = 'flex';
+    
+    callTranscriptArea.innerHTML = '';
+    callInput.value = '';
+
+    appendCallTranscript('system', '通话已连接');
+    
+    callTimerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - voiceCallStartTime) / 1000);
+        const minutes = String(Math.floor(elapsed / 60)).padStart(2, '0');
+        const seconds = String(elapsed % 60).padStart(2, '0');
+        const timeString = `${minutes}:${seconds}`;
+        callStatus.textContent = timeString; 
+    }, 1000);
+
+    getAiCallReply("[system: 通话已接通，请说第一句话。]");
+}
+
+// 这是新的、修复后的代码，请完整复制并替换
+async function endCall(reason = 'ended') {
+    clearTimeout(callInitiationTimeout);
+    isCallRinging = false;
+    const character = db.characters.find(c => c.id === currentCallTargetId);
+
+    // 无论通话是否曾接通，只要UI还在，就先隐藏它
+    voiceCallOverlay.classList.remove('visible');
+
+    if (!character) {
+        // 如果找不到角色信息，重置状态并直接退出
+        isVoiceCallActive = false;
+        currentCallTargetId = null;
+        clearInterval(callTimerInterval);
+        return;
+    }
+
+    // 清理计时器和通话状态
+    clearInterval(callTimerInterval);
+    const duration = callStatus.textContent;
+
+    // --- 核心修复逻辑开始 ---
+    if (isVoiceCallActive) { // 情况一：通话曾被接通过
+        const summaryDisplay = {
+            id: `msg_call_${Date.now()}_disp`, role: 'system',
+            content: `[system-display:与 ${character.remarkName} 的通话已结束，时长 ${duration}]`,
+            parts: [], timestamp: Date.now()
+        };
+        const summaryContext = {
+            id: `msg_call_${Date.now()}_ctx`, role: 'user',
+            content: `[system: 与 ${character.realName} 的通话已结束。通话记录：${JSON.stringify(voiceCallTranscript)}]`,
+            parts: [{type: 'text', text: `[system: 与 ${character.realName} 的通话已结束。通话记录：${JSON.stringify(voiceCallTranscript)}]`}],
+            timestamp: Date.now()
+        };
+        character.history.push(summaryDisplay, summaryContext);
+        if(currentChatId === character.id) {
+             addMessageBubble(summaryDisplay);
+        }
+    } else { // 情况二：通话从未接通（被拒接或无应答）
+        let transitionPrompt = '';
+        if (reason === 'declined') {
+            // 如果是AI主动拒接，强制它发消息解释
+            transitionPrompt = `[system: 你刚刚拒绝了 ${character.myName} 的电话。请用一句话向用户解释你为什么不方便接电话，以自然地过渡回聊天。]`;
+        } else if (reason === 'timeout' || reason === 'no_action_reply') {
+            // 如果是超时未接，强制它发消息表示歉意或询问
+            transitionPrompt = `[system: 你似乎错过了 ${character.myName} 的来电。请发一条消息表示歉意或询问对方有什么事，以自然地过渡回聊天。]`;
+        }
+
+        if (transitionPrompt) {
             const contextMessage = {
-                id: `msg_context_${Date.now()}`,
-                role: 'user',
-                content: `[system: ${text}]`,
-                parts: [{type: 'text', text: `[system: ${text}]`}],
+                id: `msg_call_fail_${Date.now()}`, role: 'user',
+                content: transitionPrompt,
+                parts: [{type: 'text', text: transitionPrompt}],
                 timestamp: Date.now()
             };
-            if (currentChatType === 'group') {
-                contextMessage.senderId = 'user_me';
-                visualMessage.senderId = 'user_me';
+            character.history.push(contextMessage);
+            // 关键：主动触发一次AI回复，强制它从卡死的状态中恢复
+            if (currentChatId === character.id) {
+                getAiReply();
             }
-
-            chat.history.push(visualMessage, contextMessage);
-            addMessageBubble(visualMessage);
-            // ▼▼▼ 核心修复：分别添加两条消息到数据库 ▼▼▼
-            await dataStorage.addMessage(currentChatId, currentChatType, visualMessage);
-            await dataStorage.addMessage(currentChatId, currentChatType, contextMessage);
-            // ▲▲▲ 修复结束 ▲▲▲
-            renderChatList();
-            timeSkipModal.classList.remove('visible');
         }
+    }
+    // --- 核心修复逻辑结束 ---
 
-        function setupFileSystem() {
-            fileBtn.addEventListener('click', () => {
-                sendFileModal.classList.add('visible');
-                sendFileForm.reset();
-            });
+    // 统一重置所有状态
+    isVoiceCallActive = false;
+    voiceCallTranscript = [];
+    voiceCallStartTime = null;
+    currentCallTargetId = null;
+    
+    await saveData();
+}
 
-            sendFileForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const chat = (currentChatType === 'private') ? db.characters.find(c => c.id === currentChatId) : db.groups.find(g => g.id === currentChatId);
-                if (!chat) return;
+function sendCallMessage() {
+    const text = callInput.value.trim();
+    if (!text || isGenerating) return;
+    appendCallTranscript('user', text);
+    getAiCallReply(text);
+    callInput.value = '';
+}
 
-                const fileName = fileNameInput.value.trim();
-                const fileContent = fileContentInput.value.trim();
-                if (!fileName || !fileContent) return;
+async function getAiCallReply(userText) {
+    if (isGenerating) return;
+    const character = db.characters.find(c => c.id === currentCallTargetId);
+    if (!character) return;
 
-                const myName = (currentChatType === 'private') ? chat.myName : chat.me.nickname;
-                const contentString = `[${myName}的文件：${fileName}]`;
-                const aiContentString = `[${myName}发送的文件，文件名：'${fileName}'，文件内容：'${fileContent}']`;
+    isGenerating = true;
+    sendCallMessageBtn.disabled = true;
 
-                const message = {
-                    id: `msg_${Date.now()}`,
-                    role: 'user',
-                    content: contentString,
-                    parts: [{ type: 'text', text: aiContentString }],
-                    timestamp: Date.now(),
-                    senderId: 'user_me',
-                    fileData: { name: fileName, content: fileContent }
-                };
-
-                chat.history.push(message);
-                // ▼▼▼ 核心修复 ▼▼▼
-                await dataStorage.addMessage(currentChatId, currentChatType, message);
-                // ▲▲▲ 修复结束 ▲▲▲
-                renderMessages(false, true);
-                renderChatList();
-                sendFileModal.classList.remove('visible');
-            });
+    try {
+      // --- ▼▼▼ 核心修改：添加了第5条绝对禁止规则 ▼▼▼ ---
+        const prompt = `[通话中] 你是 ${character.realName} (人设: ${character.persona})，正在和 ${character.myName} 通话。你的回复必须遵循以下核心规则：
+1.  **丰富描写**: 你的回复不仅限于对话，必须包含丰富的**动作和环境描写**，并使用英文括号 () 将其包裹起来。这对于营造通话的真实感至关重要。
+2.  **内容长度**: 你的每次回复**必须包含3句或更多的句子**，确保内容饱满，避免简短的回答。
+3.  **保持人设**: 所有回复都必须**严格遵循你的人设和当前的对话上下文**。
+4.  **直接输出**: 请直接输出对话和描写内容，不要添加任何额外的前缀或解释。
+5.  **【绝对禁止】**: 你的回复内容本身，绝对禁止被 "[...消息：...]" 这种格式所包裹。`;
+        // --- ▲▲▲ 修改结束 ▲▲▲ ---
+        const callHistory = voiceCallTranscript.map(line => ({
+            role: line.sender === 'user' ? 'user' : 'assistant',
+            content: line.text
+        }));
+        const messages = [
+            { role: 'system', content: prompt },
+            ...callHistory.slice(-5),
+            { role: 'user', content: userText }
+        ];
+        const aiResponseText = await callAiApi(messages);
+        const replies = aiResponseText.split('\n').filter(reply => reply.trim() !== '');
+        for (const reply of replies) {
+            appendCallTranscript("ai", reply);
+            await new Promise(resolve => setTimeout(resolve, Math.random() * 500 + 200));
         }
+    } catch (error) {
+        // --- 核心修改：增加用户提示 ---
+        const errorMessage = `[AI服务器返回错误: ${error.message}]`;
+        appendCallTranscript("system", errorMessage);
+        showToast('AI回复失败，可能是服务器临时问题'); // 弹出顶部的友好提示
+    } finally {
+        isGenerating = false;
+        sendCallMessageBtn.disabled = false;
+    }
+}
 
-        function setupLocationSystem() {
-            locationBtn.addEventListener('click', () => {
-                sendLocationModal.classList.add('visible');
-                sendLocationForm.reset();
-            });
+function appendCallTranscript(sender, text) {
+    voiceCallTranscript.push({ sender, text });
+    const line = document.createElement('div');
+    line.className = 'call-transcript-line';
 
-            sendLocationForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const chat = (currentChatType === 'private') ? db.characters.find(c => c.id === currentChatId) : db.groups.find(g => g.id === currentChatId);
-                if (!chat) return;
-
-                const mainLocation = locationMainInput.value.trim();
-                const detailLocation = locationDetailInput.value.trim();
-                if (!mainLocation || !detailLocation) return;
-
-                const myName = (currentChatType === 'private') ? chat.myName : chat.me.nickname;
-                const contentString = `[${myName}的位置共享]`; 
-                const aiContentString = `[${myName}分享了位置：主位置 '${mainLocation}', 详细位置 '${detailLocation}']`;
-
-                const message = {
-                    id: `msg_${Date.now()}`,
-                    role: 'user',
-                    content: contentString,
-                    parts: [{ type: 'text', text: aiContentString }],
-                    timestamp: Date.now(),
-                    senderId: 'user_me',
-                    locationData: { main: mainLocation, detail: detailLocation }
-                };
-
-                chat.history.push(message);
-                // ▼▼▼ 核心修复 ▼▼▼
-                await dataStorage.addMessage(currentChatId, currentChatType, message);
-                // ▲▲▲ 修复结束 ▲▲▲
-                renderMessages(false, true);
-                renderChatList();
-                sendLocationModal.classList.remove('visible');
-            });
-            closeLocationDisplayBtn.addEventListener('click', () => {
-                displayLocationModal.classList.remove('visible');
-            });
+    if (sender === 'system') {
+        line.innerHTML = `<span class="action">${text}</span>`;
+    } else {
+        const name = sender === 'user' ? '我' : callName.textContent;
+        
+        // --- ▼▼▼ 核心修正：使用更通用的正则表达式 ▼▼▼ ---
+        let cleanText = text;
+        if (sender === 'ai') {
+            // 这个新规则可以匹配 "[任意字符的消息：...]"
+            const contentMatch = text.match(/\[.*?的消息[:：]\s*([\s\S]+?)\]/);
+            if (contentMatch && contentMatch[1]) {
+                cleanText = contentMatch[1].trim(); 
+            }
         }
+        // --- ▲▲▲ 修正结束 ▲▲▲ ---
 
+        const styledText = cleanText.replace(/\((.*?)\)/g, '<span class="action">($1)</span>');
+        line.innerHTML = `<strong>${name}:</strong> <span class="dialog">${styledText}</span>`;
+    }
+    
+    callTranscriptArea.appendChild(line);
+    callTranscriptArea.scrollTop = callTranscriptArea.scrollHeight;
+}
+// --- NEW: File System Setup ---
+function setupFileSystem() {
+    fileBtn.addEventListener('click', () => {
+        sendFileModal.classList.add('visible');
+        sendFileForm.reset();
+    });
+
+    sendFileForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const chat = (currentChatType === 'private') ? db.characters.find(c => c.id === currentChatId) : db.groups.find(g => g.id === currentChatId);
+        if (!chat) return;
+
+        const fileName = fileNameInput.value.trim();
+        const fileContent = fileContentInput.value.trim();
+        if (!fileName || !fileContent) return;
+
+        const myName = (currentChatType === 'private') ? chat.myName : chat.me.nickname;
+        
+        // This string is what's displayed in the chat bubble (without file content)
+        const contentString = `[${myName}的文件：${fileName}]`;
+        
+        // This string includes the content and is sent to the AI for context
+        const aiContentString = `[${myName}发送的文件，文件名：'${fileName}'，文件内容：'${fileContent}']`;
+
+        const message = {
+            id: `msg_${Date.now()}`,
+            role: 'user',
+            content: contentString,
+            parts: [{ type: 'text', text: aiContentString }], // Send full content to AI
+            timestamp: Date.now(),
+            senderId: 'user_me',
+            fileData: { name: fileName, content: fileContent } // Store data for rendering the card
+        };
+
+        chat.history.push(message);
+        await saveData();
+        renderMessages(false, true);
+        renderChatList();
+        sendFileModal.classList.remove('visible');
+    });
+}
+// --- NEW: Location System Setup ---
+function setupLocationSystem() {
+    locationBtn.addEventListener('click', () => {
+        sendLocationModal.classList.add('visible');
+        sendLocationForm.reset();
+    });
+
+    sendLocationForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const chat = (currentChatType === 'private') ? db.characters.find(c => c.id === currentChatId) : db.groups.find(g => g.id === currentChatId);
+        if (!chat) return;
+
+        const mainLocation = locationMainInput.value.trim();
+        const detailLocation = locationDetailInput.value.trim();
+        if (!mainLocation || !detailLocation) return;
+
+        const myName = (currentChatType === 'private') ? chat.myName : chat.me.nickname;
+        
+        // For display in chat list preview & simple fallback
+        const contentString = `[${myName}的位置共享]`; 
+        
+        // For AI context
+        const aiContentString = `[${myName}分享了位置：主位置 '${mainLocation}', 详细位置 '${detailLocation}']`;
+
+        const message = {
+            id: `msg_${Date.now()}`,
+            role: 'user',
+            content: contentString,
+            parts: [{ type: 'text', text: aiContentString }],
+            timestamp: Date.now(),
+            senderId: 'user_me',
+            locationData: { main: mainLocation, detail: detailLocation } // Store structured data for rendering
+        };
+
+        chat.history.push(message);
+        await saveData();
+        renderMessages(false, true);
+        renderChatList();
+        sendLocationModal.classList.remove('visible');
+    });
+
+    closeLocationDisplayBtn.addEventListener('click', () => {
+        displayLocationModal.classList.remove('visible');
+    });
+}
 // --- NEW: File Display System Setup ---
 function setupFileDisplaySystem() {
     const displayModal = document.getElementById('display-file-modal');
